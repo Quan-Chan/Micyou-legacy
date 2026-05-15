@@ -88,6 +88,8 @@ class NoiseReducer(
     var enableNS: Boolean = false
     @Volatile
     var nsType: NoiseReductionType = NoiseReductionType.Ulunas
+    @Volatile
+    var intensity: Float = 1.0f
 
     // RNNoise - 延迟初始化
     private var denoiserLeft: Denoiser? = null
@@ -106,11 +108,37 @@ class NoiseReducer(
     override fun process(input: ShortArray, channelCount: Int): ShortArray {
         if (!enableNS || channelCount <= 0) return input
         
+        // 如果强度为 1.0，直接处理即可
+        if (intensity >= 1.0f) {
+            when (nsType) {
+                NoiseReductionType.RNNoise -> processRNNoise(input, channelCount)
+                NoiseReductionType.Ulunas -> processUlunas(input, channelCount)
+                else -> {}
+            }
+            return input
+        }
+
+        // 如果强度为 0.0，不处理
+        if (intensity <= 0.0f) return input
+
+        // 如果强度在 0.0 和 1.0 之间，进行混合
+        val original = input.copyOf()
         when (nsType) {
             NoiseReductionType.RNNoise -> processRNNoise(input, channelCount)
             NoiseReductionType.Ulunas -> processUlunas(input, channelCount)
             else -> {}
         }
+
+        // 混合原始信号和处理后的信号
+        // output = original * (1 - intensity) + processed * intensity
+        val alpha = intensity
+        val beta = 1.0f - alpha
+        for (i in input.indices) {
+            val processed = input[i].toInt()
+            val raw = original[i].toInt()
+            input[i] = (raw * beta + processed * alpha).toInt().coerceIn(-32768, 32767).toShort()
+        }
+
         return input
     }
 
@@ -227,32 +255,15 @@ class NoiseReducer(
             }
         } catch (e: Exception) {
             Logger.e("NoiseReducer", "Ulunas processing failed: ${e.message}", e)
-            // 不再静默关闭降噪，仅记录错误
+            // Attempt to reset state instead of permanently disabling
+            ulunasProcessorLeft?.destroy()
+            ulunasProcessorLeft = null
+            ulunasProcessorRight?.destroy()
+            ulunasProcessorRight = null
         }
     }
 
     override fun reset() {
-        // 重置 Ulunas OLA 状态，避免前一次会话的残留数据影响新会话
-        try {
-            ulunasProcessorLeft?.let { proc ->
-                val field = proc.javaClass.getDeclaredField("previous")
-                field.isAccessible = true
-                (field.get(proc) as? FloatArray)?.fill(0f)
-                val olaField = proc.javaClass.getDeclaredField("olaAccumulator")
-                olaField.isAccessible = true
-                (olaField.get(proc) as? FloatArray)?.fill(0f)
-            }
-            ulunasProcessorRight?.let { proc ->
-                val field = proc.javaClass.getDeclaredField("previous")
-                field.isAccessible = true
-                (field.get(proc) as? FloatArray)?.fill(0f)
-                val olaField = proc.javaClass.getDeclaredField("olaAccumulator")
-                olaField.isAccessible = true
-                (olaField.get(proc) as? FloatArray)?.fill(0f)
-            }
-        } catch (e: Exception) {
-            Logger.d("NoiseReducer", "Could not reset Ulunas state via reflection: ${e.message}")
-        }
     }
 
     override fun release() {

@@ -149,7 +149,7 @@ class WebServer(
                 }
             }
         } catch (e: Exception) {
-            Logger.w("WebServer", "WebSocket session error: ${e.message}")
+            // WebSocket session errors (client disconnect, etc.) are normal - don't log as warning
         } finally {
             val remaining = clientCount.decrementAndGet()
             _clientCountFlow.value = remaining

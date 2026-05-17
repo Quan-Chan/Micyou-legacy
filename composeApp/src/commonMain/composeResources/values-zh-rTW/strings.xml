@@ -402,6 +402,8 @@
     <string name="installOsNotSupported">目前作業系統不支援自動安裝</string>
     <string name="reloadingPlugins">正在重新載入插件...</string>
     <string name="vbcableInstallFailed">VB-Cable 安裝失败: %s</string>
+    <string name="vbcableToolMissing">未找到 SoundVolumeView.exe，無法配置 VB-Cable 設備</string>
+    <string name="vbcableConfigPartial">VB-Cable 已安裝但配置不完整: %s，聲音輸出可能無法正常工作</string>
     <string name="monitoringTitle">音訊品質即時監測</string>
     <string name="monitoringRtt">網路延遲 (RTT)</string>
     <string name="monitoringJitter">抖動 (Jitter)</string>

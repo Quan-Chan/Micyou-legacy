@@ -446,4 +446,11 @@
     <string name="monitoringRecordPlayLabel">錄音與播放監測</string>
     <string name="webModeDesc">啟動 HTTPS + WebSocket 伺服器，支援手機瀏覽器麥克風輸入</string>
     <string name="webUrlLabel">Web 網址</string>
+    <string name="sponsorsLabel">贊助者</string>
+    <string name="sponsorsDesc">查看愛發電贊助者</string>
+    <string name="sponsorsLoading">正在載入贊助者...</string>
+    <string name="sponsorsCount">%s 位贊助者</string>
+    <string name="sponsorsDisclaimer">此處僅顯示愛發電上對專案發起者個人 LanRhyme 的贊助。</string>
+    <string name="sponsorsEmpty">暫無贊助者</string>
+    <string name="sponsorsGoToAifadian">贊助</string>
     </resources>

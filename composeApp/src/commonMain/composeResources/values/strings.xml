@@ -446,4 +446,11 @@
     <string name="equalizerBrightVocalPreset">Bright Vocal</string>
     <string name="equalizerDeepVoicePreset">Deep Voice</string>
     <string name="equalizerPodcastPreset">Podcast</string>
+    <string name="sponsorsLabel">Sponsors</string>
+    <string name="sponsorsDesc">View sponsors on Aifadian</string>
+    <string name="sponsorsLoading">Loading sponsors...</string>
+    <string name="sponsorsCount">%s sponsors</string>
+    <string name="sponsorsDisclaimer">Only showing personal sponsorships to the project creator LanRhyme on Aifadian.</string>
+    <string name="sponsorsEmpty">No sponsors yet</string>
+    <string name="sponsorsGoToAifadian">Sponsor</string>
 </resources>

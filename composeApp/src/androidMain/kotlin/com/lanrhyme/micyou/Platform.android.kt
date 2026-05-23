@@ -90,6 +90,17 @@ actual fun isWindowsPlatform(): Boolean = false
 
 actual fun isMacOSPlatform(): Boolean = false
 
+actual fun getAifadianApiToken(): String = BuildConfig.AIFADIAN_API_TOKEN
+actual fun getAifadianUserId(): String = BuildConfig.AIFADIAN_USER_ID
+
+actual fun md5(input: String): String {
+    val md = java.security.MessageDigest.getInstance("MD5")
+    val digest = md.digest(input.toByteArray())
+    return digest.joinToString("") { "%02x".format(it) }
+}
+
+actual fun currentTimeSeconds(): Long = System.currentTimeMillis() / 1000
+
 @Composable
 actual fun QrCodeImage(content: String, modifier: Modifier, sizeDp: Int) {
     // Web mode not supported on Android

@@ -17,7 +17,9 @@ import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
+import java.io.File
 import java.io.FileOutputStream
+import java.util.Properties
 import javax.imageio.ImageIO
 import javax.inject.Inject
 
@@ -27,6 +29,24 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+}
+
+val aifadianApiToken: String = run {
+    val localProps = Properties()
+    val localFile = File(rootDir, "local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { localProps.load(it) }
+    }
+    localProps.getProperty("AIFADIAN_API_TOKEN", "")
+}
+
+val aifadianUserId: String = run {
+    val localProps = Properties()
+    val localFile = File(rootDir, "local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { localProps.load(it) }
+    }
+    localProps.getProperty("AIFADIAN_USER_ID", "")
 }
 
 val composeVersion = libs.versions.composeMultiplatform.get()
@@ -126,6 +146,8 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = project.property("project.version.code").toString().toInt()
         versionName = project.property("project.version").toString()
+        buildConfigField("String", "AIFADIAN_API_TOKEN", "\"$aifadianApiToken\"")
+        buildConfigField("String", "AIFADIAN_USER_ID", "\"$aifadianUserId\"")
     }
 
     buildFeatures {
@@ -187,7 +209,7 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.lanrhyme.micyou.MainKt"
-        jvmArgs("-Dfile.encoding=UTF-8", "-Dapp.version=${project.property("project.version")}")
+        jvmArgs("-Dfile.encoding=UTF-8", "-Dapp.version=${project.property("project.version")}", "-Daifadian.api.token=$aifadianApiToken", "-Daifadian.user.id=$aifadianUserId")
 
         nativeDistributions {
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))

@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.InstallDesktop
 import androidx.compose.material.icons.rounded.Language
@@ -209,6 +210,8 @@ import micyou.composeapp.generated.resources.sampleRateLabel
 import micyou.composeapp.generated.resources.selectBackgroundImage
 import micyou.composeapp.generated.resources.settingsTitle
 import micyou.composeapp.generated.resources.softwareIntro
+import micyou.composeapp.generated.resources.sponsorsDesc
+import micyou.composeapp.generated.resources.sponsorsLabel
 import micyou.composeapp.generated.resources.themeColorLabel
 import micyou.composeapp.generated.resources.themeDark
 import micyou.composeapp.generated.resources.themeLabel
@@ -1521,9 +1524,14 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                 val uriHandler = LocalUriHandler.current
                 var showLicenseDialog by remember { mutableStateOf(false) }
     var showContributorsDialog by remember { mutableStateOf(false) }
+    var showSponsorsDialog by remember { mutableStateOf(false) }
 
                 if (showContributorsDialog) {
                     ContributorsDialog(onDismiss = { showContributorsDialog = false })
+                }
+
+                if (showSponsorsDialog) {
+                    SponsorsDialog(onDismiss = { showSponsorsDialog = false })
                 }
 
                 if (showLicenseDialog) {
@@ -1584,6 +1592,20 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                             supportingContent = { Text(stringResource(Res.string.contributorsDesc)) },
                             leadingContent = { Icon(Icons.Rounded.People, null,modifier = Modifier.size(24.dp)) },
                             modifier = Modifier.clickable { showContributorsDialog = true },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(stringResource(Res.string.sponsorsLabel)) },
+                            supportingContent = { Text(stringResource(Res.string.sponsorsDesc)) },
+                            leadingContent = { Icon(Icons.Rounded.Favorite, null,modifier = Modifier.size(24.dp)) },
+                            modifier = Modifier.clickable { showSponsorsDialog = true },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }

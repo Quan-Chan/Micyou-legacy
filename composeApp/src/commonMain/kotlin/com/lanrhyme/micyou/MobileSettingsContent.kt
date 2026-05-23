@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.rounded.TextSnippet
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.People
@@ -1019,6 +1020,7 @@ private fun ExpressiveAboutSettings(viewModel: MainViewModel, hazeState: HazeSta
     val uriHandler = LocalUriHandler.current
     var showLicenseDialog by remember { mutableStateOf(false) }
     var showContributorsDialog by remember { mutableStateOf(false) }
+    var showSponsorsDialog by remember { mutableStateOf(false) }
     val cardOpacity = state.backgroundSettings.cardOpacity
     val enableHaze = state.backgroundSettings.enableHazeEffect && state.backgroundSettings.hasCustomBackground
     val baseContainerColor = MaterialTheme.colorScheme.surfaceBright
@@ -1026,6 +1028,10 @@ private fun ExpressiveAboutSettings(viewModel: MainViewModel, hazeState: HazeSta
 
     if (showContributorsDialog) {
         ContributorsDialog(onDismiss = { showContributorsDialog = false })
+    }
+
+    if (showSponsorsDialog) {
+        SponsorsDialog(onDismiss = { showSponsorsDialog = false })
     }
 
     if (showLicenseDialog) {
@@ -1125,6 +1131,33 @@ private fun ExpressiveAboutSettings(viewModel: MainViewModel, hazeState: HazeSta
                     Text(stringResource(Res.string.contributorsLabel), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                     Spacer(Modifier.height(4.dp))
                     Text(stringResource(Res.string.contributorsDesc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+
+    // 赞助者
+    items.add { isFirst, isLast ->
+        ExpressiveListItem(
+            isFirst = isFirst,
+            isLast = isLast,
+            onClick = { showSponsorsDialog = true },
+            containerColor = containerColor,
+            hazeState = hazeState,
+            enableHaze = enableHaze
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Rounded.Favorite, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(Res.string.sponsorsLabel), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                    Spacer(Modifier.height(4.dp))
+                    Text(stringResource(Res.string.sponsorsDesc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

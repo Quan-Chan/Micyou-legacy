@@ -446,4 +446,11 @@
     <string name="realTimeSpectrumLabel">实时频谱（原始 vs 处理后）喵~ 📈</string>
     <string name="webModeDesc">启动 HTTPS + WebSocket 服务喵~支持手机浏览器麦克风输入喵~</string>
     <string name="webUrlLabel">Web 地址喵~</string>
+    <string name="sponsorsLabel">赞助者喵~ ❤️</string>
+    <string name="sponsorsDesc">查看爱发电赞助者喵~</string>
+    <string name="sponsorsLoading">正在加载赞助者喵~ (´・ω・`)</string>
+    <string name="sponsorsCount">%s 位赞助者喵~</string>
+    <string name="sponsorsDisclaimer">此处仅显示爱发电上对项目发起者个人 LanRhyme 的赞助喵~ 🐾</string>
+    <string name="sponsorsEmpty">暂无赞助者喵~ 等待好心人出现 (｡•́︿•̀｡)</string>
+    <string name="sponsorsGoToAifadian">赞助喵~ ❤️</string>
 </resources>

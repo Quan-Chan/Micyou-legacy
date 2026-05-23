@@ -200,6 +200,37 @@ actual fun isWindowsPlatform(): Boolean = PlatformInfo.isWindows
 
 actual fun isMacOSPlatform(): Boolean = PlatformInfo.isMacOS
 
+private fun findLocalProperty(key: String): String {
+    // Try system property first
+    val fromProp = System.getProperty(key.lowercase().replace('_', '.'))
+    if (!fromProp.isNullOrBlank()) return fromProp
+    // Search for local.properties in current dir and parents
+    var dir = java.io.File(System.getProperty("user.dir"))
+    while (dir != null) {
+        val file = java.io.File(dir, "local.properties")
+        if (file.exists()) {
+            val props = java.util.Properties()
+            file.inputStream().use { props.load(it) }
+            val value = props.getProperty(key, "")
+            if (value.isNotBlank()) return value
+        }
+        dir = dir.parentFile
+    }
+    return ""
+}
+
+actual fun getAifadianApiToken(): String = findLocalProperty("AIFADIAN_API_TOKEN")
+
+actual fun getAifadianUserId(): String = findLocalProperty("AIFADIAN_USER_ID")
+
+actual fun md5(input: String): String {
+    val md = java.security.MessageDigest.getInstance("MD5")
+    val digest = md.digest(input.toByteArray())
+    return digest.joinToString("") { "%02x".format(it) }
+}
+
+actual fun currentTimeSeconds(): Long = System.currentTimeMillis() / 1000
+
 @Composable
 actual fun QrCodeImage(content: String, modifier: Modifier, sizeDp: Int) {
     val qrBitmap = remember(content) {

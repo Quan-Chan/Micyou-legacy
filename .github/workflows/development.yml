@@ -27,6 +27,16 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Write Aifadian Config
+      env:
+        AIFADIAN_API_TOKEN: ${{ secrets.AIFADIAN_API_TOKEN }}
+        AIFADIAN_USER_ID: ${{ secrets.AIFADIAN_USER_ID }}
+      run: |
+        if [ -n "$AIFADIAN_API_TOKEN" ]; then
+          echo "AIFADIAN_API_TOKEN=$AIFADIAN_API_TOKEN" >> local.properties
+          echo "AIFADIAN_USER_ID=$AIFADIAN_USER_ID" >> local.properties
+        fi
+
     - name: Build Android Debug
       run: ./gradlew :composeApp:assembleDebug
 
@@ -89,7 +99,14 @@ jobs:
 
     - name: Build Windows Artifacts
       shell: pwsh
+      env:
+        AIFADIAN_API_TOKEN: ${{ secrets.AIFADIAN_API_TOKEN }}
+        AIFADIAN_USER_ID: ${{ secrets.AIFADIAN_USER_ID }}
       run: |
+        if ($env:AIFADIAN_API_TOKEN) {
+          "AIFADIAN_API_TOKEN=$env:AIFADIAN_API_TOKEN" | Out-File -FilePath local.properties -Append -Encoding utf8
+          "AIFADIAN_USER_ID=$env:AIFADIAN_USER_ID" | Out-File -FilePath local.properties -Append -Encoding utf8
+        }
         ./gradlew :composeApp:packageWindowsZip :composeApp:packageWindowsNsis
 
     - name: Prepare Windows Artifacts
@@ -130,6 +147,15 @@ jobs:
         cache: gradle
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Write Aifadian Config
+      env:
+        AIFADIAN_API_TOKEN: ${{ secrets.AIFADIAN_API_TOKEN }}
+        AIFADIAN_USER_ID: ${{ secrets.AIFADIAN_USER_ID }}
+      run: |
+        if [ -n "$AIFADIAN_API_TOKEN" ]; then
+          echo "AIFADIAN_API_TOKEN=$AIFADIAN_API_TOKEN" >> local.properties
+          echo "AIFADIAN_USER_ID=$AIFADIAN_USER_ID" >> local.properties
+        fi
     - name: Build Linux DEB and RPM packages
       run: ./gradlew :composeApp:packageDeb :composeApp:packageRpm
     - name: Prepare Linux Artifacts
@@ -186,6 +212,15 @@ jobs:
         cache: gradle
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Write Aifadian Config
+      env:
+        AIFADIAN_API_TOKEN: ${{ secrets.AIFADIAN_API_TOKEN }}
+        AIFADIAN_USER_ID: ${{ secrets.AIFADIAN_USER_ID }}
+      run: |
+        if [ -n "$AIFADIAN_API_TOKEN" ]; then
+          echo "AIFADIAN_API_TOKEN=$AIFADIAN_API_TOKEN" >> local.properties
+          echo "AIFADIAN_USER_ID=$AIFADIAN_USER_ID" >> local.properties
+        fi
     - name: Build macOS DMG
       run: ./gradlew :composeApp:packageDmg
     - name: Prepare macOS Artifacts
@@ -224,7 +259,14 @@ jobs:
         cache: gradle
     - name: Build Windows No-JRE Package
       shell: pwsh
+      env:
+        AIFADIAN_API_TOKEN: ${{ secrets.AIFADIAN_API_TOKEN }}
+        AIFADIAN_USER_ID: ${{ secrets.AIFADIAN_USER_ID }}
       run: |
+        if ($env:AIFADIAN_API_TOKEN) {
+          "AIFADIAN_API_TOKEN=$env:AIFADIAN_API_TOKEN" | Out-File -FilePath local.properties -Append -Encoding utf8
+          "AIFADIAN_USER_ID=$env:AIFADIAN_USER_ID" | Out-File -FilePath local.properties -Append -Encoding utf8
+        }
         ./gradlew :composeApp:packageWindowsNoJreZip
     - name: Prepare Windows No-JRE Artifact
       shell: pwsh
@@ -258,6 +300,15 @@ jobs:
         cache: gradle
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Write Aifadian Config
+      env:
+        AIFADIAN_API_TOKEN: ${{ secrets.AIFADIAN_API_TOKEN }}
+        AIFADIAN_USER_ID: ${{ secrets.AIFADIAN_USER_ID }}
+      run: |
+        if [ -n "$AIFADIAN_API_TOKEN" ]; then
+          echo "AIFADIAN_API_TOKEN=$AIFADIAN_API_TOKEN" >> local.properties
+          echo "AIFADIAN_USER_ID=$AIFADIAN_USER_ID" >> local.properties
+        fi
     - name: Build Linux No-JRE Package
       run: ./gradlew :composeApp:packageLinuxNoJreTarGz
     - name: Prepare Linux No-JRE Artifact
@@ -305,6 +356,15 @@ jobs:
         cache: gradle
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Write Aifadian Config
+      env:
+        AIFADIAN_API_TOKEN: ${{ secrets.AIFADIAN_API_TOKEN }}
+        AIFADIAN_USER_ID: ${{ secrets.AIFADIAN_USER_ID }}
+      run: |
+        if [ -n "$AIFADIAN_API_TOKEN" ]; then
+          echo "AIFADIAN_API_TOKEN=$AIFADIAN_API_TOKEN" >> local.properties
+          echo "AIFADIAN_USER_ID=$AIFADIAN_USER_ID" >> local.properties
+        fi
     - name: Build macOS No-JRE Package
       run: ./gradlew :composeApp:packageMacosNoJreTarGz
     - name: Prepare macOS No-JRE Artifact

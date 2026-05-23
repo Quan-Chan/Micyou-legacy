@@ -110,6 +110,11 @@ expect fun isWindowsPlatform(): Boolean
  */
 expect fun isMacOSPlatform(): Boolean
 
+expect fun getAifadianApiToken(): String
+expect fun getAifadianUserId(): String
+expect fun md5(input: String): String
+expect fun currentTimeSeconds(): Long
+
 @Composable
 expect fun QrCodeImage(content: String, modifier: Modifier, sizeDp: Int)
 

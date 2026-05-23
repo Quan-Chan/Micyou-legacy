@@ -125,6 +125,17 @@ private fun buildSignedRequest(userId: String, apiToken: String, params: Map<Str
 
 @Composable
 fun SponsorsDialog(onDismiss: () -> Unit) {
+    val client = remember {
+        HttpClient {
+            install(ContentNegotiation) {
+                json(Json { ignoreUnknownKeys = true; coerceInputValues = true })
+            }
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose { client.close() }
+    }
+
     var sponsors by remember { mutableStateOf<List<SponsorItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -140,12 +151,6 @@ fun SponsorsDialog(onDismiss: () -> Unit) {
                     error = "API not configured"
                     isLoading = false
                     return@launch
-                }
-
-                val client = HttpClient {
-                    install(ContentNegotiation) {
-                        json(Json { ignoreUnknownKeys = true; coerceInputValues = true })
-                    }
                 }
 
                 val allSponsors = mutableListOf<AifadianSponsor>()

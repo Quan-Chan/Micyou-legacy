@@ -13,10 +13,10 @@ import com.lanrhyme.micyou.platform.PlatformInfo
 import com.lanrhyme.micyou.platform.WindowsAccentColorExtractor
 import com.lanrhyme.micyou.theme.PaletteStyle
 import com.lanrhyme.micyou.theme.dynamicColorScheme
+import com.lanrhyme.micyou.network.LocalNetworkAddressProvider
 import com.lanrhyme.micyou.util.QrCodeGenerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.net.InetAddress
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.SourceDataLine
 import micyou.composeapp.generated.resources.Res
@@ -26,60 +26,26 @@ class JVMPlatform: Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
     override val type: PlatformType = PlatformType.Desktop
     override val ipAddress: String
-        get() = ipAddresses.firstOrNull() ?: "Unknown"
+        get() = LocalNetworkAddressProvider.getPreferredIpAddress()
 
     override val ipAddresses: List<String>
-        get() = getLocalIpAddresses()
+        get() = LocalNetworkAddressProvider.getCachedIpAddressDetails().map { it.ip }
 
-    companion object {
-        private val VIRTUAL_KEYWORDS = listOf(
-            "vmware", "virtualbox", "hyper-v", "vethernet", "wsl", "docker",
-            "tunnel", "teredo", "isatap", "vpn"
-        )
-    }
-
-    private fun getLocalIpAddresses(): List<String> {
-        try {
-            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
-            val candidates = mutableListOf<java.net.InetAddress>()
-
-            while (interfaces.hasMoreElements()) {
-                val iface = interfaces.nextElement()
-                if (iface.isLoopback || !iface.isUp || iface.isVirtual) continue
-                val name = iface.name.lowercase()
-                val displayName = iface.displayName?.lowercase() ?: ""
-                if (VIRTUAL_KEYWORDS.any { name.contains(it) || displayName.contains(it) }) continue
-
-                val addresses = iface.inetAddresses
-                while (addresses.hasMoreElements()) {
-                    val addr = addresses.nextElement()
-                    if (addr is java.net.Inet4Address && !addr.isLoopbackAddress) {
-                        candidates.add(addr)
-                    }
-                }
-            }
-    val sortedCandidates = candidates.sortedByDescending { addr ->
-                val ip = addr.hostAddress
-                when {
-                    ip.startsWith("192.168.") -> 100
-                    ip.startsWith("172.") && (ip.split(".")[1].toIntOrNull() in 16..31) -> 80
-                    ip.startsWith("10.") -> 50
-                    ip.startsWith("198.18.") -> -10
-                    ip.startsWith("169.254.") -> -20
-                    else -> 0
-                }
-            }
-    val result = sortedCandidates.map { it.hostAddress }
-            if (result.isNotEmpty()) return result
-            
-            return listOf(java.net.InetAddress.getLocalHost().hostAddress)
-        } catch (e: Exception) {
-            return listOf("Unknown")
-        }
-    }
+    override val ipAddressDetails: List<IpAddressInfo>
+        get() = LocalNetworkAddressProvider.getCachedIpAddressDetails()
 }
 
 actual fun getPlatform(): Platform = JVMPlatform()
+actual suspend fun getPreferredLocalIpAddress(): String = withContext(Dispatchers.IO) {
+    runCatching { LocalNetworkAddressProvider.refreshNow().firstOrNull()?.ip ?: "Unknown" }
+        .onFailure { Logger.w("Platform", "Failed to refresh preferred IP address: ${it.message}") }
+        .getOrDefault("Unknown")
+}
+actual suspend fun refreshLocalIpAddressDetails(): List<IpAddressInfo> = withContext(Dispatchers.IO) {
+    runCatching { LocalNetworkAddressProvider.refreshNow() }
+        .onFailure { Logger.w("Platform", "Failed to refresh IP address details: ${it.message}") }
+        .getOrDefault(emptyList())
+}
 
 actual fun getAppVersion(): String {
     val fromManifest = object {}.javaClass.`package`?.implementationVersion

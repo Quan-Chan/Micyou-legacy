@@ -8,10 +8,23 @@ import java.net.InetAddress
 class MdnsAdvertiser {
     private var jmdns: JmDNS? = null
     private var serviceInfo: ServiceInfo? = null
+    private var currentPort: Int = -1
+    private var currentBindAddress: String = "0.0.0.0"
 
-    fun advertise(port: Int) {
+    fun advertise(port: Int, bindAddress: String = "0.0.0.0") {
+        advertiseInternal(port, bindAddress, force = false)
+    }
+
+    private fun advertiseInternal(port: Int, bindAddress: String, force: Boolean) {
+        if (!force && jmdns != null && currentPort == port && currentBindAddress == bindAddress) {
+            Logger.d("MdnsAdvertiser", "mDNS already advertising on $bindAddress:$port")
+            return
+        }
+
+        close(resetPort = false)
+
         try {
-            val localHost = findLanAddress()
+            val localHost = resolveAdvertiseAddress(bindAddress)
             val hostName = "MicYou (${InetAddress.getLocalHost().hostName})"
             jmdns = JmDNS.create(localHost, hostName)
 
@@ -22,51 +35,51 @@ class MdnsAdvertiser {
                 "MicYou audio streaming server"
             )
             jmdns?.registerService(serviceInfo)
+            currentPort = port
+            currentBindAddress = bindAddress
             Logger.i("MdnsAdvertiser", "mDNS service advertised: $hostName on ${localHost?.hostAddress} port $port")
         } catch (e: Exception) {
             Logger.w("MdnsAdvertiser", "Failed to advertise mDNS service: ${e.message}")
-            close()
+            close(resetPort = true)
             throw e
         }
     }
 
-    companion object {
-        private val VIRTUAL_KEYWORDS = listOf(
-            "vmware", "virtualbox", "hyper-v", "vethernet", "wsl", "docker",
-            "tunnel", "teredo", "isatap", "vpn"
-        )
+    /**
+     * 重新广播 mDNS 服务（IP 变化时调用）
+     */
+    fun reAdvertise(port: Int = currentPort, bindAddress: String = currentBindAddress) {
+        if (port <= 0) {
+            Logger.w("MdnsAdvertiser", "Cannot re-advertise: invalid port $port")
+            return
+        }
+        Logger.i("MdnsAdvertiser", "Re-advertising mDNS service due to IP change")
+        advertiseInternal(port, bindAddress, force = true)
+    }
+
+    private fun resolveAdvertiseAddress(bindAddress: String): InetAddress? {
+        return if (bindAddress == "0.0.0.0") {
+            findLanAddress()
+        } else {
+            InetAddress.getByName(bindAddress)
+        }
     }
 
     private fun findLanAddress(): InetAddress? {
-        try {
-            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
-            val candidates = mutableListOf<Pair<java.net.NetworkInterface, java.net.Inet4Address>>()
-            while (interfaces.hasMoreElements()) {
-                val networkInterface = interfaces.nextElement()
-                if (networkInterface.isLoopback || !networkInterface.isUp || networkInterface.isVirtual) continue
-                val name = networkInterface.name.lowercase()
-                val displayName = networkInterface.displayName?.lowercase() ?: ""
-                if (VIRTUAL_KEYWORDS.any { name.contains(it) || displayName.contains(it) }) continue
-                val addresses = networkInterface.inetAddresses
-                while (addresses.hasMoreElements()) {
-                    val address = addresses.nextElement()
-                    if (address is java.net.Inet4Address && !address.isLoopbackAddress) {
-                        candidates.add(networkInterface to address)
-                    }
-                }
-            }
-            // Prefer interfaces with common LAN prefixes (192.168.x.x, 10.x.x.x)
-            val lanPreferred = candidates.firstOrNull { it.second.hostAddress?.startsWith("192.168.") == true }
-                ?: candidates.firstOrNull { it.second.hostAddress?.startsWith("10.") == true }
-                ?: candidates.firstOrNull()
-            return lanPreferred?.second
+        return try {
+            val preferredIp = LocalNetworkAddressProvider.getPreferredIpAddress()
+            if (preferredIp != "Unknown") InetAddress.getByName(preferredIp) else null
         } catch (e: Exception) {
             Logger.w("MdnsAdvertiser", "Failed to find LAN address: ${e.message}")
+            null
         }
-        return null
     }
 
     fun close() {
+        close(resetPort = true)
+    }
+
+    private fun close(resetPort: Boolean) {
         try {
             val j = jmdns
             val si = serviceInfo
@@ -79,6 +92,10 @@ class MdnsAdvertiser {
         } finally {
             serviceInfo = null
             jmdns = null
+            if (resetPort) {
+                currentPort = -1
+                currentBindAddress = "0.0.0.0"
+            }
         }
     }
 }

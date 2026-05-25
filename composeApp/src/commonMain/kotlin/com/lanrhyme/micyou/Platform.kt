@@ -9,14 +9,22 @@ enum class PlatformType {
     Android, Desktop
 }
 
+data class IpAddressInfo(
+    val ip: String,
+    val interfaceName: String
+)
+
 interface Platform {
     val name: String
     val type: PlatformType
     val ipAddress: String
     val ipAddresses: List<String>
+    val ipAddressDetails: List<IpAddressInfo>
 }
 
 expect fun getPlatform(): Platform
+expect suspend fun getPreferredLocalIpAddress(): String
+expect suspend fun refreshLocalIpAddressDetails(): List<IpAddressInfo>
 
 expect fun getAppVersion(): String
 expect fun openUrl(url: String)
@@ -117,4 +125,3 @@ expect fun currentTimeSeconds(): Long
 
 @Composable
 expect fun QrCodeImage(content: String, modifier: Modifier, sizeDp: Int)
-

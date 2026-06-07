@@ -66,6 +66,18 @@
       "vad": "人声活动检测",
       "threshold": "阈值"
     },
+    "audioChain": {
+      "title": "音频处理链路",
+      "desc": "点击以配置音频效果",
+      "descPopup": "拖动以重新排序音频效果",
+      "reset": "重置为默认",
+      "NoiseReduction": "降噪",
+      "Dereverb": "去混响",
+      "Amplifier": "增益放大",
+      "AGC": "自动增益 (AGC)",
+      "VAD": "语音检测 (VAD)",
+      "Equalizer": "均衡器 (EQ)"
+    },
     "plugins": {
       "underConstruction": "正在建设中",
       "portedDesc": "此部分正在从 KMP 版本移植。"

@@ -49,26 +49,6 @@
               </Select>
             </div>
 
-            <!-- VB-CABLE Management -->
-            <div class="bg-surface-bright rounded-2xl p-4 space-y-4 shadow-sm">
-              <div class="flex items-center justify-between">
-                <h4 class="font-bold text-on-surface text-lg">{{ $t('settings.vbcable.title') }}</h4>
-                <span class="text-xs font-medium px-2 py-1 rounded-md" :class="hasVBCable ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'">
-                  {{ hasVBCable ? $t('settings.vbcable.installed') : $t('settings.vbcable.notDetected') }}
-                </span>
-              </div>
-              <p class="text-xs text-on-surface-variant">
-                {{ $t('settings.vbcable.desc') }}
-              </p>
-              <button v-if="!hasVBCable" class="w-full py-2 bg-surface-variant hover:bg-surface-variant/80 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                <Download class="w-4 h-4" /> {{ $t('settings.vbcable.download') }}
-              </button>
-            </div>
-          </div>
-
-          <!-- AUDIO SECTION -->
-          <div v-if="currentSection === 'audio'" class="space-y-6">
-            
             <!-- Output Device -->
             <div class="bg-surface-bright rounded-2xl p-4 space-y-4 shadow-sm">
               <div>
@@ -93,6 +73,27 @@
               </p>
             </div>
 
+            <!-- VB-CABLE Management -->
+            <div class="bg-surface-bright rounded-2xl p-4 space-y-4 shadow-sm">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-on-surface text-lg">{{ $t('settings.vbcable.title') }}</h4>
+                <span class="text-xs font-medium px-2 py-1 rounded-md" :class="hasVBCable ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'">
+                  {{ hasVBCable ? $t('settings.vbcable.installed') : $t('settings.vbcable.notDetected') }}
+                </span>
+              </div>
+              <p class="text-xs text-on-surface-variant">
+                {{ $t('settings.vbcable.desc') }}
+              </p>
+              <button v-if="!hasVBCable" class="w-full py-2 bg-surface-variant hover:bg-surface-variant/80 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                <Download class="w-4 h-4" /> {{ $t('settings.vbcable.download') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- AUDIO SECTION -->
+          <div v-if="currentSection === 'audio'" class="space-y-6">
+            
+
             <!-- Spectrum Analyzer / Real-time Monitoring -->
             <div class="bg-surface-bright rounded-2xl p-4 space-y-3 shadow-sm">
               <div class="flex justify-between items-center mb-2">
@@ -112,7 +113,6 @@
                 <canvas ref="spectrumCanvas" class="w-full h-full"></canvas>
               </div>
             </div>
-
             <!-- Amplifier (Gain) -->
             <div class="bg-surface-bright rounded-2xl p-4 shadow-sm flex items-center gap-4">
               <span class="text-sm font-medium text-on-surface whitespace-nowrap">{{ $t('settings.audioParams.gain') }}</span>
@@ -199,6 +199,26 @@
                 <span class="text-xs text-on-surface-variant whitespace-nowrap">{{ $t('settings.audioParams.threshold') }}</span>
                 <input type="range" min="-100" max="0" v-model.number="settings.vadThreshold" class="w-full accent-primary">
                 <span class="text-xs w-12 text-right">{{ settings.vadThreshold }} dB</span>
+              </div>
+            </div>
+
+            <!-- Audio Processing Chain -->
+            <div @click="showAudioChain = true" class="bg-surface-bright rounded-2xl p-4 shadow-sm space-y-3 cursor-pointer hover:bg-surface-variant/30 transition-colors group">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold text-on-surface">{{ $t('settings.audioChain.title') }}</h4>
+                  <p class="text-xs text-on-surface-variant mt-0.5">{{ $t('settings.audioChain.descPopup') }}</p>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                  <ChevronRight class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" />
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-2 overflow-hidden text-xs text-on-surface-variant font-medium opacity-80 pt-1">
+                <template v-for="(item, index) in settings.processingChain" :key="item">
+                  <span class="whitespace-nowrap">{{ $t(`settings.audioChain.${item}`) }}</span>
+                  <ArrowRight v-if="index < settings.processingChain.length - 1" class="w-3 h-3 shrink-0" />
+                </template>
               </div>
             </div>
 
@@ -298,6 +318,7 @@
   <ContributorsDialog :isOpen="showContributors" @close="showContributors = false" />
   <SponsorsDialog :isOpen="showSponsors" @close="showSponsors = false" />
   <LicensesDialog :isOpen="showLicenses" @close="showLicenses = false" />
+  <AudioChainDialog :isOpen="showAudioChain" :chain="settings.processingChain" @update:chain="updateProcessingChain" @close="showAudioChain = false" />
 </template>
 
 <script setup lang="ts">
@@ -317,11 +338,15 @@ import {
   Globe,
   Users,
   Heart,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight
 } from 'lucide-vue-next';
 import ContributorsDialog from './ContributorsDialog.vue';
 import SponsorsDialog from './SponsorsDialog.vue';
 import LicensesDialog from './LicensesDialog.vue';
+import AudioChainDialog from './AudioChainDialog.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const props = defineProps<{
@@ -370,7 +395,8 @@ const settings = reactive({
   agcAttack: 50,
   agcDecay: 50,
   vadEnabled: false,
-  vadThreshold: -40
+  vadThreshold: -40,
+  processingChain: ['NoiseReduction', 'Dereverb', 'Equalizer', 'Amplifier', 'AGC', 'VAD']
 });
 
 const audioDevices = ref<string[]>([]);
@@ -452,7 +478,12 @@ const drawSpectrum = () => {
 const showContributors = ref(false);
 const showSponsors = ref(false);
 const showLicenses = ref(false);
+const showAudioChain = ref(false);
 const appVersion = ref('0.1.0');
+
+const updateProcessingChain = (newChain: string[]) => {
+  settings.processingChain = newChain;
+};
 
 const openDialog = async (name: string) => {
   if (name === 'Contributors') showContributors.value = true;

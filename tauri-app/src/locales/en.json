@@ -66,6 +66,18 @@
       "vad": "Voice Activity Detection",
       "threshold": "Threshold"
     },
+    "audioChain": {
+      "title": "Audio Processing Chain",
+      "desc": "Click to configure audio effects",
+      "descPopup": "Drag to reorder audio effects",
+      "reset": "Reset to Default",
+      "NoiseReduction": "Noise Reduction",
+      "Dereverb": "Dereverb",
+      "Amplifier": "Amplifier (Gain)",
+      "AGC": "Auto Gain Control",
+      "VAD": "Voice Activity Detection",
+      "Equalizer": "Equalizer (EQ)"
+    },
     "plugins": {
       "underConstruction": "Under Construction",
       "portedDesc": "This section is being ported from the KMP version."

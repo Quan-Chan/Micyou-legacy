@@ -82,7 +82,7 @@
                   </SelectTrigger>
                   <SelectContent class="border-surface-variant/20 rounded-xl bg-surface shadow-lg max-h-[40vh]">
                     <SelectGroup>
-                      <SelectItem value="">{{ $t('settings.audioOutput.systemDefault') }}</SelectItem>
+                      <SelectItem value="default">{{ $t('settings.audioOutput.systemDefault') }}</SelectItem>
                       <SelectItem v-for="dev in audioDevices" :key="dev" :value="dev">{{ dev }}</SelectItem>
                     </SelectGroup>
                   </SelectContent>
@@ -283,9 +283,9 @@
             </div>
 
             <div class="bg-secondary-container/50 rounded-2xl p-6 mt-4">
-              <h3 class="text-base font-bold text-on-secondary-container mb-2">MicYou - Open Source AI Microphone</h3>
+              <h3 class="text-base font-bold text-on-secondary-container mb-2">{{ $t('settings.about.introTitle') }}</h3>
               <p class="text-sm text-on-secondary-container/80 leading-relaxed">
-                MicYou is a versatile multiplatform application that transforms your Android device into a high-quality PC microphone. Leveraging advanced AI noise reduction algorithms, it ensures crystal-clear audio transmission via USB or Wi-Fi, providing an unparalleled recording and communication experience.
+                {{ $t('settings.about.introText') }}
               </p>
             </div>
           </div>
@@ -305,13 +305,12 @@ import { ref, computed, watch, reactive, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { 
+import {
   Settings as SettingsIcon, 
   X, 
   Mic, 
   Puzzle, 
   Info,
-  ChevronDown,
   Download,
   Construction,
   User,
@@ -359,7 +358,7 @@ watch(currentLanguage, (newLang) => {
 
 // Reactive Settings State
 const settings = reactive({
-  audioDevice: '',
+  audioDevice: 'default',
   gain: 0,
   nsEnabled: false,
   nsType: 'RNNoise',
@@ -448,9 +447,7 @@ const drawSpectrum = () => {
   animationFrameId = requestAnimationFrame(drawSpectrum);
 };
 
-const closeDialog = () => {
-  emit('close');
-};
+
 
 const showContributors = ref(false);
 const showSponsors = ref(false);

@@ -676,6 +676,7 @@ const syncSettingsToBackend = async () => {
       settings: {
         gain: settings.gain,
         nsEnabled: settings.nsEnabled,
+        nsType: settings.nsType,
         nsIntensity: settings.nsIntensity,
         dereverbEnabled: settings.dereverbEnabled,
         dereverbLevel: settings.dereverbLevel,
@@ -685,6 +686,8 @@ const syncSettingsToBackend = async () => {
         agcDecay: settings.agcDecay,
         vadEnabled: settings.vadEnabled,
         vadThreshold: settings.vadThreshold,
+        processingChain: settings.processingChain,
+        equalizer: settings.equalizer,
       }
     });
   } catch (e) {

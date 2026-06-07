@@ -8,7 +8,15 @@ use crate::protocol::micyou::{AudioPacketMessageOrdered, MessageWrapper};
 use tokio_util::sync::CancellationToken;
 
 pub async fn start_udp_server(tx: Sender<AudioPacketMessageOrdered>, port: u16, cancel_token: CancellationToken, stats: std::sync::Arc<crate::stats::NetworkStats>) -> Result<(), Box<dyn Error + Send + Sync>> {
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).await?;
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse()?;
+    let socket2 = socket2::Socket::new(socket2::Domain::IPV4, socket2::Type::DGRAM, None)?;
+    if let Err(e) = socket2.set_recv_buffer_size(2 * 1024 * 1024) {
+        eprintln!("Warning: Failed to set UDP receive buffer size to 2MB: {}", e);
+    }
+    socket2.bind(&addr.into())?;
+    socket2.set_nonblocking(true)?;
+    let std_socket: std::net::UdpSocket = socket2.into();
+    let socket = UdpSocket::from_std(std_socket)?;
     println!("UDP Audio Server listening on {}", port);
 
     let mut buf = vec![0u8; 65535];

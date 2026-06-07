@@ -188,8 +188,16 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                     }
 
                     if !pcm_f32.is_empty() {
+                        let channels = audio_data.channel_count as usize;
+                        let queued_samples = audio_manager.queued_samples();
+                        let queued_ms = if channels > 0 {
+                            (queued_samples as f64 / channels as f64) / 48.0
+                        } else {
+                            0.0
+                        };
+
                         // Run DSP pipeline
-                        let (_raw_rms, processed_rms) = dsp_processor.process(&mut pcm_f32);
+                        let (_raw_rms, processed_rms) = dsp_processor.process(&mut pcm_f32, channels.max(1), queued_ms);
 
                         audio_manager.push_audio_data(&pcm_f32);
                         

@@ -2,6 +2,24 @@ use nnnoiseless::DenoiseState;
 use std::sync::{Arc, RwLock};
 use std::path::PathBuf;
 
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EqualizerConfig {
+    pub enabled: bool,
+    pub pre_amp: f32,
+    pub gains: Vec<f32>, // 10 bands
+}
+
+impl Default for EqualizerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            pre_amp: 0.0,
+            gains: vec![0.0; 10],
+        }
+    }
+}
+
 /// Audio DSP settings, synced from the frontend.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,6 +36,11 @@ pub struct AudioDspSettings {
     pub agc_decay: f32,      // raw slider value 1..100, maps to 0.0001..0.01
     pub vad_enabled: bool,
     pub vad_threshold: f32,  // dB, -100..0
+    
+    #[serde(default)]
+    pub processing_chain: Vec<String>,
+    #[serde(default)]
+    pub equalizer: EqualizerConfig,
 }
 
 impl Default for AudioDspSettings {
@@ -35,6 +58,15 @@ impl Default for AudioDspSettings {
             agc_decay: 50.0,
             vad_enabled: false,
             vad_threshold: -40.0,
+            processing_chain: vec![
+                "NoiseReduction".to_string(),
+                "Dereverb".to_string(),
+                "Equalizer".to_string(),
+                "Amplifier".to_string(),
+                "AGC".to_string(),
+                "VAD".to_string(),
+            ],
+            equalizer: EqualizerConfig::default(),
         }
     }
 }
@@ -310,6 +342,198 @@ impl SpeexStyleNS {
     }
 }
 
+// ─── Equalizer (10-band Biquad Peaking EQ) ──────────────────────────────────
+
+struct BiquadFilter {
+    a0: f64, a1: f64, a2: f64,
+    b1: f64, b2: f64,
+    x1: f64, x2: f64,
+    y1: f64, y2: f64,
+}
+
+impl BiquadFilter {
+    fn new() -> Self {
+        Self {
+            a0: 1.0, a1: 0.0, a2: 0.0,
+            b1: 0.0, b2: 0.0,
+            x1: 0.0, x2: 0.0,
+            y1: 0.0, y2: 0.0,
+        }
+    }
+
+    fn set_peaking_eq(&mut self, sample_rate: f64, center_freq: f64, q: f64, db_gain: f64) {
+        let w0 = 2.0 * std::f64::consts::PI * center_freq / sample_rate;
+        let alpha = w0.sin() / (2.0 * q);
+        let a = 10.0_f64.powf(db_gain / 40.0);
+
+        let b0_raw = 1.0 + alpha * a;
+        let b1_raw = -2.0 * w0.cos();
+        let b2_raw = 1.0 - alpha * a;
+        let a0_raw = 1.0 + alpha / a;
+        let a1_raw = -2.0 * w0.cos();
+        let a2_raw = 1.0 - alpha / a;
+
+        self.a0 = b0_raw / a0_raw;
+        self.a1 = b1_raw / a0_raw;
+        self.a2 = b2_raw / a0_raw;
+        self.b1 = a1_raw / a0_raw;
+        self.b2 = a2_raw / a0_raw;
+    }
+
+    fn process(&mut self, x: f64) -> f64 {
+        let y = self.a0 * x + self.a1 * self.x1 + self.a2 * self.x2 - self.b1 * self.y1 - self.b2 * self.y2;
+        self.x2 = self.x1;
+        self.x1 = x;
+        self.y2 = self.y1;
+        self.y1 = y;
+        y
+    }
+}
+
+struct EqualizerEffect {
+    filters_ch1: Vec<BiquadFilter>,
+    filters_ch2: Vec<BiquadFilter>,
+    pre_amp_gain: f32,
+    frequencies: [f64; 10],
+}
+
+impl EqualizerEffect {
+    fn new() -> Self {
+        let mut eq = Self {
+            filters_ch1: (0..10).map(|_| BiquadFilter::new()).collect(),
+            filters_ch2: (0..10).map(|_| BiquadFilter::new()).collect(),
+            pre_amp_gain: 1.0,
+            frequencies: [31.25, 62.5, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0],
+        };
+        eq.update_filters(&EqualizerConfig::default());
+        eq
+    }
+
+    fn update_filters(&mut self, config: &EqualizerConfig) {
+        self.pre_amp_gain = 10.0_f32.powf(config.pre_amp / 20.0);
+        let sample_rate = 48000.0;
+        for i in 0..10 {
+            let gain = if i < config.gains.len() { config.gains[i] as f64 } else { 0.0 };
+            self.filters_ch1[i].set_peaking_eq(sample_rate, self.frequencies[i], 1.0, gain);
+            self.filters_ch2[i].set_peaking_eq(sample_rate, self.frequencies[i], 1.0, gain);
+        }
+    }
+
+    fn process(&mut self, data: &mut [f32], channels: usize) {
+        if channels == 1 {
+            for sample in data.iter_mut() {
+                let mut s = (*sample * self.pre_amp_gain) as f64;
+                for i in 0..10 {
+                    s = self.filters_ch1[i].process(s);
+                }
+                *sample = s as f32;
+            }
+        } else if channels == 2 {
+            for (i, sample) in data.iter_mut().enumerate() {
+                let mut s = (*sample * self.pre_amp_gain) as f64;
+                if i % 2 == 0 {
+                    for j in 0..10 { s = self.filters_ch1[j].process(s); }
+                } else {
+                    for j in 0..10 { s = self.filters_ch2[j].process(s); }
+                }
+                *sample = s as f32;
+            }
+        }
+    }
+}
+
+// ─── Adaptive Resampler (Jitter Buffer) ─────────────────────────────────────
+
+struct ResamplerEffect {
+    playback_ratio: f64,
+    playback_ratio_integral: f64,
+    pos: f64,
+    prev_frame: Vec<f32>,
+}
+
+impl ResamplerEffect {
+    fn new() -> Self {
+        Self {
+            playback_ratio: 1.0,
+            playback_ratio_integral: 0.0,
+            pos: 0.0,
+            prev_frame: Vec::new(),
+        }
+    }
+
+    fn update_playback_ratio(&mut self, queued_ms: f64) {
+        let target_ms = 80.0;
+        let error_ms = queued_ms - target_ms;
+
+        let kp = 0.0008;
+        let ki = 0.000008;
+        let max_adjust = 0.03;
+
+        let mut integral = self.playback_ratio_integral + error_ms * 0.01;
+        integral = integral.clamp(-5000.0, 5000.0);
+        self.playback_ratio_integral = integral;
+
+        let adjust = (error_ms * kp + integral * ki).clamp(-max_adjust, max_adjust);
+        self.playback_ratio = (1.0 + adjust).clamp(1.0 - max_adjust, 1.0 + max_adjust);
+    }
+
+    fn process(&mut self, input: &[f32], channels: usize) -> Vec<f32> {
+        if (self.playback_ratio - 1.0).abs() < 0.00005 {
+            return input.to_vec();
+        }
+
+        if channels == 0 || input.is_empty() {
+            return input.to_vec();
+        }
+
+        let input_frames = input.len() / channels;
+        if input_frames <= 1 {
+            return input.to_vec();
+        }
+
+        if self.prev_frame.len() != channels {
+            self.prev_frame = input[..channels].to_vec();
+            self.pos = 1.0;
+        }
+
+        let effective_frames = input_frames + 1;
+        let mut pos = self.pos;
+        let estimated_out_frames = ((input_frames as f64 / self.playback_ratio) + 4.0) as usize;
+        let mut output = Vec::with_capacity(estimated_out_frames * channels);
+
+        let get_sample = |frame: usize, ch: usize| -> f32 {
+            if frame == 0 {
+                self.prev_frame[ch]
+            } else {
+                input[(frame - 1) * channels + ch]
+            }
+        };
+
+        while (pos as usize) + 1 < effective_frames {
+            let base = pos as usize;
+            let frac = (pos - base as f64) as f32;
+
+            for c in 0..channels {
+                let s0 = get_sample(base, c);
+                let s1 = get_sample(base + 1, c);
+                let v = s0 + (s1 - s0) * frac;
+                output.push(v);
+            }
+
+            pos += self.playback_ratio;
+        }
+
+        let last_frame_offset = (input_frames - 1) * channels;
+        for c in 0..channels {
+            self.prev_frame[c] = input[last_frame_offset + c];
+        }
+
+        self.pos = pos - input_frames as f64;
+
+        output
+    }
+}
+
 // ─── Main DSP Processor ─────────────────────────────────────────────────────
 
 /// The main DSP processor. Operates on f32 PCM samples at 48kHz.
@@ -324,6 +548,10 @@ pub struct DspProcessor {
     ulunas_model_path: Option<PathBuf>,
     // Speexdsp-style NS
     speex_ns: SpeexStyleNS,
+    // Equalizer
+    equalizer: EqualizerEffect,
+    // Adaptive Resampler
+    resampler: ResamplerEffect,
     // AGC envelope follower
     agc_envelope: f32,
     // VAD fade state (0.0 = muted, 1.0 = full)
@@ -346,6 +574,8 @@ impl DspProcessor {
             ulunas_buffer: Vec::with_capacity(RNNOISE_FRAME_SIZE * 2),
             ulunas_model_path,
             speex_ns: SpeexStyleNS::new(),
+            equalizer: EqualizerEffect::new(),
+            resampler: ResamplerEffect::new(),
             agc_envelope: 0.0,
             vad_fade: 1.0,
             raw_spectrum: vec![0.0; 64],
@@ -355,7 +585,7 @@ impl DspProcessor {
 
     /// Process a chunk of f32 PCM audio in-place.
     /// Returns (raw_rms, processed_rms) for level metering.
-    pub fn process(&mut self, data: &mut Vec<f32>) -> (f32, f32) {
+    pub fn process(&mut self, data: &mut Vec<f32>, channels: usize, queued_ms: f64) -> (f32, f32) {
         if data.is_empty() {
             return (0.0, 0.0);
         }
@@ -364,42 +594,63 @@ impl DspProcessor {
         self.compute_spectrum(data, true);
 
         let settings = self.settings.read().unwrap().clone();
+        
+        // Update Equalizer
+        self.equalizer.update_filters(&settings.equalizer);
 
-        // 1. Gain
-        if settings.gain.abs() > 0.01 {
-            let gain_linear = 10.0_f32.powf(settings.gain / 20.0);
-            for sample in data.iter_mut() {
-                *sample *= gain_linear;
+        // Dynamic Processing Chain
+        for effect in &settings.processing_chain {
+            match effect.as_str() {
+                "NoiseReduction" => {
+                    if settings.ns_enabled {
+                        match settings.ns_type.as_str() {
+                            "RNNoise" => self.apply_rnnoise(data, settings.ns_intensity),
+                            "Ulunas" => self.apply_ulunas(data, settings.ns_intensity),
+                            "Speexdsp" => self.apply_speex(data, settings.ns_intensity),
+                            "Lightweight" => self.apply_lightweight(data, settings.ns_intensity),
+                            _ => {}
+                        }
+                    }
+                }
+                "Dereverb" => {
+                    if settings.dereverb_enabled {
+                        self.apply_dereverb(data, settings.dereverb_level);
+                    }
+                }
+                "Equalizer" => {
+                    if settings.equalizer.enabled {
+                        self.equalizer.process(data, channels);
+                    }
+                }
+                "Amplifier" => {
+                    if settings.gain.abs() > 0.01 {
+                        let gain_linear = 10.0_f32.powf(settings.gain / 20.0);
+                        for sample in data.iter_mut() {
+                            *sample *= gain_linear;
+                        }
+                    }
+                }
+                "AGC" => {
+                    if settings.agc_enabled {
+                        let attack_rate = settings.agc_attack / 1000.0;
+                        let decay_rate = settings.agc_decay / 10000.0;
+                        self.apply_agc(data, settings.agc_target, attack_rate, decay_rate);
+                    }
+                }
+                "VAD" => {
+                    if settings.vad_enabled {
+                        self.apply_vad(data, settings.vad_threshold);
+                    }
+                }
+                _ => {}
             }
         }
-
-        // 2. Noise Suppression
-        if settings.ns_enabled {
-            match settings.ns_type.as_str() {
-                "RNNoise" => self.apply_rnnoise(data, settings.ns_intensity),
-                "Ulunas" => self.apply_ulunas(data, settings.ns_intensity),
-                "Speexdsp" => self.apply_speex(data, settings.ns_intensity),
-                "Lightweight" => self.apply_lightweight(data, settings.ns_intensity),
-                _ => {} // "None"
-            }
-        }
-
-        // 3. Dereverb
-        if settings.dereverb_enabled {
-            self.apply_dereverb(data, settings.dereverb_level);
-        }
-
-        // 4. AGC
-        if settings.agc_enabled {
-            let attack_rate = settings.agc_attack / 1000.0;
-            let decay_rate = settings.agc_decay / 10000.0;
-            self.apply_agc(data, settings.agc_target, attack_rate, decay_rate);
-        }
-
-        // 5. VAD
-        if settings.vad_enabled {
-            self.apply_vad(data, settings.vad_threshold);
-        }
+        
+        // Resampler
+        self.resampler.update_playback_ratio(queued_ms);
+        let resampled = self.resampler.process(data, channels);
+        data.clear();
+        data.extend_from_slice(&resampled);
 
         // Clamp
         for sample in data.iter_mut() {
@@ -623,7 +874,7 @@ mod tests {
         }));
         let mut processor = DspProcessor::new(settings, None);
         let mut data = vec![0.1; 480];
-        processor.process(&mut data);
+        processor.process(&mut data, 1, 80.0);
         assert!(data[0] > 0.9, "Expected amplified sample, got {}", data[0]);
     }
 
@@ -635,7 +886,7 @@ mod tests {
         }));
         let mut processor = DspProcessor::new(settings, None);
         let mut data = vec![0.5; 480];
-        processor.process(&mut data);
+        processor.process(&mut data, 1, 80.0);
         assert!(data[0] < 0.1, "Expected attenuated sample, got {}", data[0]);
     }
 
@@ -648,7 +899,7 @@ mod tests {
         }));
         let mut processor = DspProcessor::new(settings, None);
         let mut data = vec![0.001; 960];
-        for _ in 0..20 { processor.process(&mut data); }
+        for _ in 0..20 { processor.process(&mut data, 1, 80.0); }
         assert!(data[data.len() - 1].abs() < 0.01, "Expected muted, got {}", data[data.len() - 1]);
     }
 
@@ -663,7 +914,7 @@ mod tests {
         }));
         let mut processor = DspProcessor::new(settings, None);
         let mut data: Vec<f32> = vec![0.01; 4800];
-        for _ in 0..10 { processor.process(&mut data); }
+        for _ in 0..10 { processor.process(&mut data, 1, 80.0); }
         assert!(data[data.len() - 1].abs() > 0.01, "AGC should have amplified the signal");
     }
 }

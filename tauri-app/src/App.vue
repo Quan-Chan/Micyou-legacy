@@ -14,7 +14,7 @@ import UdpWarningDialog from './components/UdpWarningDialog.vue';
 
 const serverState = ref<'idle' | 'connecting' | 'streaming'>('idle');
 const connectionMode = ref<'wifi' | 'usb' | 'web'>('wifi');
-const serverPort = ref(9123);
+const serverPort = ref(6000);
 const audioLevel = ref(0);
 const networkInfo = ref<{ ips: string[], port: number } | null>(null);
 const selectedIp = ref<string>('0.0.0.0');

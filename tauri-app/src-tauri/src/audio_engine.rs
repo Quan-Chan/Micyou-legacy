@@ -91,4 +91,12 @@ impl AudioOutputManager {
             producer.push_slice(data);
         }
     }
+
+    pub fn queued_samples(&self) -> usize {
+        if let Some(producer) = &self.producer {
+            producer.len()
+        } else {
+            0
+        }
+    }
 }

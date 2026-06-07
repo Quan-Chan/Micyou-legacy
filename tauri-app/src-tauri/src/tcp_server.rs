@@ -58,6 +58,7 @@ async fn handle_client(mut socket: TcpStream, addr: SocketAddr, app_handle: AppH
     let mut handshake_buf = vec![0u8; HANDSHAKE_CLIENT_STR.len()];
     socket.read_exact(&mut handshake_buf).await?;
     if handshake_buf != HANDSHAKE_CLIENT_STR {
+        eprintln!("Invalid handshake from client: {:?}", handshake_buf);
         return Err("Invalid handshake from client".into());
     }
     
@@ -174,6 +175,7 @@ async fn handle_client(mut socket: TcpStream, addr: SocketAddr, app_handle: AppH
                 // Abort all on error
                 writer_task.abort();
                 ping_task.abort();
+                eprintln!("Invalid packet magic received: {}", magic);
                 return Err("Invalid packet magic".into());
             }
 

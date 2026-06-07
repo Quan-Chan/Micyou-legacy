@@ -14,16 +14,19 @@ impl NetworkManager {
         let host_name = hostname::get()?.into_string().unwrap_or_else(|_| "UnknownHost".to_string());
         let instance_name = format!("MicYou ({})", host_name);
         
-        let local_ip = local_ip_address::local_ip()?;
+        let local_ip = Self::get_best_ip().unwrap_or_else(|| "127.0.0.1".to_string());
         
         let service_fullname = format!("{}.{}", instance_name, MDNS_SERVICE_TYPE);
+        
+        // Hostname must be a valid DNS name, e.g. "mycomputer.local."
+        let valid_host_name = format!("{}.local.", host_name.replace(" ", "-"));
         
         // Setup mDNS service info
         let properties: HashMap<String, String> = HashMap::new();
         let service_info = ServiceInfo::new(
             MDNS_SERVICE_TYPE,
             &instance_name,
-            &service_fullname,
+            &valid_host_name,
             &local_ip.to_string(),
             port,
             Some(properties)
@@ -42,5 +45,33 @@ impl NetworkManager {
     pub fn stop_mdns(&self) {
         let _ = self.mdns.unregister(&self.service_fullname);
         let _ = self.mdns.shutdown();
+    }
+
+    fn get_best_ip() -> Option<String> {
+        if let Ok(interfaces) = local_ip_address::list_afinet_netifas() {
+            let mut best_ip = None;
+            for (name, ip) in interfaces {
+                if ip.is_loopback() || !ip.is_ipv4() { continue; }
+                let ip_str = ip.to_string();
+                let name_lower = name.to_lowercase();
+                
+                // Filter out common TUN/VPN and virtual interfaces
+                if ip_str.starts_with("198.18.") || name_lower.contains("tailscale") || name_lower.contains("virtual") || name_lower.contains("wsl") || name_lower.contains("veth") || name_lower.contains("flclash") || name_lower.contains("clash") {
+                    continue;
+                }
+                
+                if ip_str.starts_with("192.168.") {
+                    return Some(ip_str); // Prefer 192.168.x.x
+                }
+                if best_ip.is_none() {
+                    best_ip = Some(ip_str);
+                }
+            }
+            if best_ip.is_some() {
+                return best_ip;
+            }
+        }
+        // Fallback
+        local_ip_address::local_ip().map(|ip| ip.to_string()).ok()
     }
 }

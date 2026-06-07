@@ -4,17 +4,22 @@ pub mod tcp_server;
 pub mod udp_server;
 pub mod audio_engine;
 pub mod jitter_buffer;
+pub mod dsp;
 
 pub mod adb_manager;
 
 use tauri::{Emitter, AppHandle, State};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use std::sync::RwLock;
 use tokio_util::sync::CancellationToken;
+
+use dsp::{AudioDspSettings, DspProcessor};
 
 struct ServerState {
     cancel_token: Arc<Mutex<Option<CancellationToken>>>,
     mdns_manager: Arc<Mutex<Option<network::NetworkManager>>>,
+    dsp_settings: Arc<RwLock<AudioDspSettings>>,
 }
 
 #[tauri::command]
@@ -74,6 +79,24 @@ fn get_audio_devices() -> Vec<String> {
 }
 
 #[tauri::command]
+fn update_audio_settings(state: State<'_, ServerState>, settings: AudioDspSettings) -> Result<String, String> {
+    match state.dsp_settings.write() {
+        Ok(mut current) => {
+            *current = settings;
+            Ok("Settings updated".to_string())
+        }
+        Err(e) => Err(format!("Failed to update settings: {}", e)),
+    }
+}
+
+/// Spectrum data sent to the frontend for visualization.
+#[derive(serde::Serialize, Clone)]
+struct SpectrumPayload {
+    raw: Vec<f32>,
+    processed: Vec<f32>,
+}
+
+#[tauri::command]
 async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port: u16, _mode: String, output_device: Option<String>) -> Result<String, String> {
     let mut token_lock = state.cancel_token.lock().await;
     if token_lock.is_some() {
@@ -94,6 +117,8 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
         }
     }
 
+    let dsp_settings = state.dsp_settings.clone();
+
     let (audio_tx, mut audio_rx) = tokio::sync::mpsc::channel(1024);
     let app_handle_audio = app_handle.clone();
     std::thread::spawn(move || {
@@ -103,6 +128,30 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
             return;
         }
 
+        let mut dsp_processor = {
+            // Try to find resources dir next to the executable
+            let exe_dir = std::env::current_exe()
+                .ok()
+                .and_then(|p| p.parent().map(|d| d.to_path_buf()));
+            let resources_dir = exe_dir.as_ref().and_then(|d| {
+                // Check next to exe first, then in resources subdir
+                let model_direct = d.join("ulunas.onnx");
+                if model_direct.exists() {
+                    return Some(d.clone());
+                }
+                let res_dir = d.join("resources");
+                if res_dir.join("ulunas.onnx").exists() {
+                    return Some(res_dir);
+                }
+                // Check in src-tauri/resources during development
+                let dev_res = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources");
+                if dev_res.join("ulunas.onnx").exists() {
+                    return Some(dev_res);
+                }
+                None
+            });
+            DspProcessor::new(dsp_settings, resources_dir)
+        };
         let mut jb = jitter_buffer::JitterBuffer::new(50);
         let mut frame_counter = 0;
 
@@ -136,17 +185,22 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                     }
 
                     if !pcm_f32.is_empty() {
+                        // Run DSP pipeline
+                        let (_raw_rms, processed_rms) = dsp_processor.process(&mut pcm_f32);
+
                         audio_manager.push_audio_data(&pcm_f32);
                         
                         frame_counter += 1;
                         if frame_counter % 3 == 0 {
-                            let mut sum_squares = 0.0;
-                            for &sample in &pcm_f32 {
-                                sum_squares += sample * sample;
-                            }
-                            let rms = (sum_squares / pcm_f32.len() as f32).sqrt();
-                            let level = (rms * 500.0).min(100.0) as u32;
+                            let level = (processed_rms * 500.0).min(100.0) as u32;
                             let _ = app_handle_audio.emit("audio-level", level);
+
+                            // Emit spectrum data
+                            let (raw_spec, proc_spec) = dsp_processor.get_spectrums();
+                            let _ = app_handle_audio.emit("audio-spectrum", SpectrumPayload {
+                                raw: raw_spec,
+                                processed: proc_spec,
+                            });
                         }
                     }
                 }
@@ -197,12 +251,13 @@ pub fn run() {
         .manage(ServerState {
             cancel_token: Arc::new(Mutex::new(None)),
             mdns_manager: Arc::new(Mutex::new(None)),
+            dsp_settings: Arc::new(RwLock::new(AudioDspSettings::default())),
         })
         .plugin(tauri_plugin_opener::init())
         .setup(|_app| {
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, enable_usb_mode, get_network_info, get_audio_devices, start_server, stop_server])
+        .invoke_handler(tauri::generate_handler![greet, enable_usb_mode, get_network_info, get_audio_devices, update_audio_settings, start_server, stop_server])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -36,4 +36,6 @@ rustfft = "6.4.1"
 audiopus = "0.2.0"
 ringbuf = "0.3.3"
 tokio-util = "0.7.18"
+nnnoiseless = "0.5.2"
+ort = { version = "2.0.0-rc.12", features = ["download-binaries"] }
 

@@ -7,7 +7,7 @@ use std::net::SocketAddr;
 use tauri::{AppHandle, Emitter};
 use serde::Serialize;
 use crate::protocol::{PACKET_MAGIC, HANDSHAKE_CLIENT_STR, HANDSHAKE_SERVER_STR};
-use crate::protocol::micyou::MessageWrapper;
+use crate::protocol::micyou::{MessageWrapper, AudioPacketMessageOrdered};
 use tokio_util::sync::CancellationToken;
 
 #[derive(Serialize, Clone)]
@@ -17,7 +17,7 @@ pub struct DeviceInfo {
     pub latency: u32,
 }
 
-pub async fn start_tcp_server(app_handle: AppHandle, port: u16, cancel_token: CancellationToken) -> Result<(), Box<dyn Error + Send + Sync>> {
+pub async fn start_tcp_server(app_handle: AppHandle, port: u16, cancel_token: CancellationToken, audio_tx: tokio::sync::mpsc::Sender<AudioPacketMessageOrdered>) -> Result<(), Box<dyn Error + Send + Sync>> {
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     println!("TCP Control Server listening on {}", port);
 
@@ -32,8 +32,9 @@ pub async fn start_tcp_server(app_handle: AppHandle, port: u16, cancel_token: Ca
                     Ok((socket, addr)) => {
                         println!("New client connected: {}", addr);
                         let app_handle_clone = app_handle.clone();
+                        let audio_tx_clone = audio_tx.clone();
                         tokio::spawn(async move {
-                            if let Err(e) = handle_client(socket, addr, app_handle_clone.clone()).await {
+                            if let Err(e) = handle_client(socket, addr, app_handle_clone.clone(), audio_tx_clone).await {
                                 eprintln!("Client {} error: {}", addr, e);
                             }
                             println!("Client {} disconnected", addr);
@@ -50,7 +51,7 @@ pub async fn start_tcp_server(app_handle: AppHandle, port: u16, cancel_token: Ca
     Ok(())
 }
 
-async fn handle_client(mut socket: TcpStream, addr: SocketAddr, app_handle: AppHandle) -> Result<(), Box<dyn Error + Send + Sync>> {
+async fn handle_client(mut socket: TcpStream, addr: SocketAddr, app_handle: AppHandle, audio_tx: tokio::sync::mpsc::Sender<AudioPacketMessageOrdered>) -> Result<(), Box<dyn Error + Send + Sync>> {
     // 1. Handshake
     let mut handshake_buf = vec![0u8; HANDSHAKE_CLIENT_STR.len()];
     socket.read_exact(&mut handshake_buf).await?;
@@ -143,7 +144,7 @@ async fn handle_client(mut socket: TcpStream, addr: SocketAddr, app_handle: AppH
             let payload = buffer.split_to(payload_len);
             
             let message = MessageWrapper::decode(payload.freeze())?;
-            handle_message(message, &tx).await?;
+            handle_message(message, &tx, &audio_tx).await?;
         }
     }
 
@@ -153,7 +154,12 @@ async fn handle_client(mut socket: TcpStream, addr: SocketAddr, app_handle: AppH
     Ok(())
 }
 
-async fn handle_message(msg: MessageWrapper, tx: &tokio::sync::mpsc::Sender<MessageWrapper>) -> Result<(), Box<dyn Error + Send + Sync>> {
+async fn handle_message(msg: MessageWrapper, tx: &tokio::sync::mpsc::Sender<MessageWrapper>, audio_tx: &tokio::sync::mpsc::Sender<AudioPacketMessageOrdered>) -> Result<(), Box<dyn Error + Send + Sync>> {
+    if let Some(audio) = msg.audio_packet {
+        let _ = audio_tx.send(audio).await;
+        // Don't return here, message might contain ping/mute too, although unlikely
+    }
+
     if let Some(ping) = msg.ping {
         let pong_msg = MessageWrapper {
             audio_packet: None,

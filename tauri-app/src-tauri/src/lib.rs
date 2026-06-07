@@ -7,7 +7,7 @@ pub mod jitter_buffer;
 
 pub mod adb_manager;
 
-use tauri::{Manager, Emitter, AppHandle, State};
+use tauri::{Emitter, AppHandle, State};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
@@ -55,8 +55,26 @@ fn get_network_info() -> NetworkInfo {
     }
 }
 
+use cpal::traits::{DeviceTrait, HostTrait};
+
 #[tauri::command]
-async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port: u16, mode: String) -> Result<String, String> {
+fn get_audio_devices() -> Vec<String> {
+    let mut names = Vec::new();
+    let host = cpal::default_host();
+    if let Ok(devices) = host.output_devices() {
+        for dev in devices {
+            if let Ok(name) = dev.name() {
+                names.push(name);
+            }
+        }
+    }
+    names.sort();
+    names.dedup();
+    names
+}
+
+#[tauri::command]
+async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port: u16, _mode: String, output_device: Option<String>) -> Result<String, String> {
     let mut token_lock = state.cancel_token.lock().await;
     if token_lock.is_some() {
         return Err("Server is already running".to_string());
@@ -77,62 +95,71 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
     }
 
     let (audio_tx, mut audio_rx) = tokio::sync::mpsc::channel(1024);
-    
     let app_handle_audio = app_handle.clone();
     std::thread::spawn(move || {
         let mut audio_manager = audio_engine::AudioOutputManager::new();
-        if let Err(e) = audio_manager.start() {
+        if let Err(e) = audio_manager.start(output_device) {
             eprintln!("Failed to start audio output: {}", e);
             return;
         }
 
-        let mut decoder = audiopus::coder::Decoder::new(
-            audiopus::SampleRate::Hz48000, 
-            audiopus::Channels::Stereo
-        ).expect("Failed to create Opus decoder");
-        
         let mut jb = jitter_buffer::JitterBuffer::new(50);
-        let mut pcm_buf = vec![0f32; 5760];
-        
         let mut frame_counter = 0;
 
-        let rt = tokio::runtime::Handle::current();
-        rt.block_on(async {
-            while let Some(packet) = audio_rx.recv().await {
-                jb.push(packet);
-                while let Some(ordered_packet) = jb.pop() {
-                    if let Some(audio_data) = ordered_packet.audio_packet {
-                        match decoder.decode_float(Some(&audio_data.buffer), &mut pcm_buf, false) {
-                            Ok(len) => {
-                                let samples = len * 2;
-                                audio_manager.push_audio_data(&pcm_buf[0..samples]);
-                                
-                                frame_counter += 1;
-                                if frame_counter % 3 == 0 {
-                                    let mut sum_squares = 0.0;
-                                    for &sample in &pcm_buf[0..samples] {
-                                        sum_squares += sample * sample;
-                                    }
-                                    let rms = (sum_squares / samples as f32).sqrt();
-                                    let level = (rms * 500.0).min(100.0) as u32;
-                                    let _ = app_handle_audio.emit("audio-level", level);
-                                }
+        while let Some(packet) = audio_rx.blocking_recv() {
+            jb.push(packet);
+            while let Some(ordered_packet) = jb.pop() {
+                if let Some(audio_data) = ordered_packet.audio_packet {
+                    let mut pcm_f32 = Vec::new();
+                    match audio_data.audio_format {
+                        2 => { // PCM 16-bit
+                            for chunk in audio_data.buffer.chunks_exact(2) {
+                                let sample_i16 = i16::from_le_bytes([chunk[0], chunk[1]]);
+                                pcm_f32.push(sample_i16 as f32 / i16::MAX as f32);
                             }
-                            Err(e) => {
-                                eprintln!("Opus decode error: {}", e);
+                        }
+                        3 => { // PCM 8-bit
+                            for &byte in &audio_data.buffer {
+                                let sample_f32 = (byte as f32 - 128.0) / 128.0;
+                                pcm_f32.push(sample_f32);
                             }
+                        }
+                        4 => { // PCM Float
+                            for chunk in audio_data.buffer.chunks_exact(4) {
+                                let sample_f32 = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+                                pcm_f32.push(sample_f32);
+                            }
+                        }
+                        _ => {
+                            // Ignore other formats
+                        }
+                    }
+
+                    if !pcm_f32.is_empty() {
+                        audio_manager.push_audio_data(&pcm_f32);
+                        
+                        frame_counter += 1;
+                        if frame_counter % 3 == 0 {
+                            let mut sum_squares = 0.0;
+                            for &sample in &pcm_f32 {
+                                sum_squares += sample * sample;
+                            }
+                            let rms = (sum_squares / pcm_f32.len() as f32).sqrt();
+                            let level = (rms * 500.0).min(100.0) as u32;
+                            let _ = app_handle_audio.emit("audio-level", level);
                         }
                     }
                 }
             }
-        });
+        }
     });
 
     let app_handle_tcp = app_handle.clone();
     let token_tcp = cancel_token.clone();
     let port_tcp = port;
+    let audio_tx_tcp = audio_tx.clone();
     tauri::async_runtime::spawn(async move {
-        if let Err(e) = tcp_server::start_tcp_server(app_handle_tcp, port_tcp, token_tcp).await {
+        if let Err(e) = tcp_server::start_tcp_server(app_handle_tcp, port_tcp, token_tcp, audio_tx_tcp).await {
             eprintln!("TCP Server error: {}", e);
         }
     });
@@ -172,10 +199,10 @@ pub fn run() {
             mdns_manager: Arc::new(Mutex::new(None)),
         })
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
+        .setup(|_app| {
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, enable_usb_mode, get_network_info, start_server, stop_server])
+        .invoke_handler(tauri::generate_handler![greet, enable_usb_mode, get_network_info, get_audio_devices, start_server, stop_server])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

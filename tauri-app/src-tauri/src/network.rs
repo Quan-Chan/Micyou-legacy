@@ -1,6 +1,6 @@
 use mdns_sd::{ServiceDaemon, ServiceInfo};
 use std::collections::HashMap;
-use crate::protocol::{MDNS_SERVICE_TYPE, PORT};
+use crate::protocol::MDNS_SERVICE_TYPE;
 
 pub struct NetworkManager {
     mdns: ServiceDaemon,

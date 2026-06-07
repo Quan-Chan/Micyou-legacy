@@ -6,6 +6,8 @@ import { invoke } from '@tauri-apps/api/core';
 // Icons
 import { Mic, Wifi, RadioTower, Globe, ChevronDown, CheckCircle2, Play, Square, Settings, Puzzle } from 'lucide-vue-next';
 import CustomBackground from './components/CustomBackground.vue';
+import SettingsDialog from './components/SettingsDialog.vue';
+import AudioRing from './components/AudioRing.vue';
 
 const serverState = ref<'idle' | 'connecting' | 'streaming'>('idle');
 const connectionMode = ref<'wifi' | 'usb' | 'web'>('wifi');
@@ -13,6 +15,9 @@ const serverPort = ref(9123);
 const audioLevel = ref(0);
 const networkInfo = ref<{ ips: string[], port: number } | null>(null);
 const selectedIp = ref<string>('0.0.0.0');
+
+const isSettingsOpen = ref(false);
+const outputDevice = ref<string>(localStorage.getItem('micyou_output_device') || '');
 
 // Header Animation State
 const headerColorIndex = ref(0);
@@ -71,7 +76,11 @@ const toggleStreaming = async () => {
     }
   } else {
     try {
-      await invoke('start_server', { port: Number(serverPort.value), mode: connectionMode.value });
+      await invoke('start_server', { 
+        port: Number(serverPort.value), 
+        mode: connectionMode.value,
+        outputDevice: outputDevice.value || null
+      });
       serverState.value = 'connecting';
       if (connectionMode.value === 'usb') {
         await invoke('enable_usb_mode', { port: Number(serverPort.value) });
@@ -166,19 +175,12 @@ const micScale = computed(() => {
 
         <!-- Center Panel (62%) -->
         <div class="w-[62%] haze-surface rounded-2xl flex items-center justify-center relative overflow-hidden">
-          <!-- Animated Ripples -->
-          <div v-if="serverState === 'streaming'" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="absolute w-32 h-32 rounded-full border-2 border-primary/30 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
-            <div class="absolute w-40 h-40 rounded-full border border-primary/20 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
-          </div>
-          
-          <!-- Central Mic -->
-          <div class="relative w-48 h-48 flex items-center justify-center">
-            <div class="absolute inset-0 bg-primary/5 rounded-full backdrop-blur-sm border border-primary/10 transition-transform duration-75"
-                 :style="{ transform: `scale(${serverState === 'streaming' ? micScale : 1})` }"></div>
-            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary/80 to-tertiary/80 flex items-center justify-center shadow-[0_0_30px_rgba(var(--primary),0.3)] z-10">
+          <!-- Central Mic with AudioRing -->
+          <div class="relative w-64 h-64 flex items-center justify-center transition-transform duration-200"
+               :style="{ transform: `scale(${serverState === 'streaming' ? micScale : 1})` }">
+            <AudioRing :level="audioLevel">
               <Mic class="w-10 h-10 text-on-primary" />
-            </div>
+            </AudioRing>
           </div>
           
           <div class="absolute bottom-6 font-mono text-sm text-primary/80 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
@@ -198,7 +200,7 @@ const micScale = computed(() => {
           <button class="w-10 h-10 rounded-full bg-surface-variant/40 hover:bg-surface-variant/80 flex items-center justify-center transition-colors">
             <Puzzle class="w-4 h-4 text-on-surface-variant" />
           </button>
-          <button class="w-10 h-10 rounded-full bg-surface-variant/40 hover:bg-surface-variant/80 flex items-center justify-center transition-colors">
+          <button @click="isSettingsOpen = true" class="w-10 h-10 rounded-full bg-surface-variant/40 hover:bg-surface-variant/80 flex items-center justify-center transition-colors">
             <Settings class="w-4 h-4 text-on-surface-variant" />
           </button>
           
@@ -214,5 +216,11 @@ const micScale = computed(() => {
         </div>
       </div>
     </div>
+    
+    <SettingsDialog 
+      :isOpen="isSettingsOpen" 
+      @close="isSettingsOpen = false" 
+      @updateDevice="dev => outputDevice = dev" 
+    />
   </div>
 </template>

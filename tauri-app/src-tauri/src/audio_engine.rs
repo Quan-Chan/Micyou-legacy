@@ -16,12 +16,33 @@ impl AudioOutputManager {
         }
     }
 
-    pub fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn start(&mut self, target_device: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
         let host = cpal::default_host();
-        let device = host.default_output_device().ok_or("No output device available")?;
+        
+        let device = if let Some(target) = target_device.clone() {
+            let mut matched_device = None;
+            if let Ok(devices) = host.output_devices() {
+                for dev in devices {
+                    if let Ok(name) = dev.name() {
+                        if name == target {
+                            matched_device = Some(dev);
+                            break;
+                        }
+                    }
+                }
+            }
+            if matched_device.is_none() {
+                eprintln!("Could not find exact device: {}, falling back to default.", target);
+            }
+            matched_device.or_else(|| host.default_output_device())
+        } else {
+            host.default_output_device()
+        };
+
+        let device = device.ok_or("No output device available")?;
         
         let config = device.default_output_config()?;
-        let sample_rate = config.sample_rate();
+        let _sample_rate = config.sample_rate();
         let channels = config.channels() as usize;
 
         // Initialize a ring buffer for 1 second of audio
@@ -36,7 +57,7 @@ impl AudioOutputManager {
 
         let stream = match config.sample_format() {
             SampleFormat::F32 => device.build_output_stream(
-                stream_config.clone(),
+                &stream_config,
                 move |data: &mut [f32], _: &OutputCallbackInfo| {
                     for sample in data.iter_mut() {
                         *sample = consumer.pop().unwrap_or(0.0);
@@ -46,7 +67,7 @@ impl AudioOutputManager {
                 None,
             )?,
             SampleFormat::I16 => device.build_output_stream(
-                stream_config.clone(),
+                &stream_config,
                 move |data: &mut [i16], _: &OutputCallbackInfo| {
                     for sample in data.iter_mut() {
                         let f_sample = consumer.pop().unwrap_or(0.0);

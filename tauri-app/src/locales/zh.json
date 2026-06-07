@@ -1,0 +1,118 @@
+{
+  "app": {
+    "connectionMode": "连接模式",
+    "port": "端口",
+    "level": "音量级别:",
+    "start": "开始",
+    "stop": "停止",
+    "status": {
+      "streaming": "正在接收音频",
+      "connecting": "等待设备连接...",
+      "ready": "准备就绪",
+      "streamingDesc": "已成功连接至 Android 设备。",
+      "connectingDesc": "正在监听端口 {port}",
+      "readyDesc": "点击开始以等待连接。",
+      "stateStreaming": "传输中",
+      "stateConnecting": "连接中...",
+      "stateIdle": "空闲",
+      "wifi": "已通过 Wi-Fi 连接",
+      "usb": "已通过 USB 连接",
+      "disconnected": "未连接",
+      "waiting": "等待连接中...",
+      "running": "MicYou 服务运行中"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "categories": {
+      "general": "常规",
+      "audio": "音频",
+      "plugins": "插件",
+      "about": "关于"
+    },
+    "language": {
+      "title": "语言",
+      "desc": "选择应用程序的显示语言",
+      "system": "跟随系统"
+    },
+    "vbcable": {
+      "title": "VB-Cable 音频转发",
+      "installed": "已安装",
+      "notDetected": "未检测到",
+      "desc": "若要将麦克风声音路由到其他应用程序（如 OBS 或 Discord），你需要安装 VB-Audio Virtual Cable。",
+      "download": "下载 VB-Cable"
+    },
+    "audioOutput": {
+      "title": "输出设备",
+      "desc": "麦克风的声音应该在哪里播放？",
+      "systemDefault": "系统默认设备",
+      "routingActive": "VB-CABLE 转发已激活。音频将被转发到 \"CABLE Output\"。"
+    },
+    "spectrum": {
+      "title": "实时频谱",
+      "raw": "原始 (Raw)",
+      "processed": "处理后 (Processed)"
+    },
+    "audioParams": {
+      "gain": "增益",
+      "noiseSuppression": "降噪",
+      "intensity": "强度",
+      "dereverb": "去混响",
+      "level": "级别",
+      "agc": "自动增益控制",
+      "target": "目标电平",
+      "attack": "起效时间",
+      "decay": "释放时间",
+      "vad": "人声活动检测",
+      "threshold": "阈值"
+    },
+    "plugins": {
+      "underConstruction": "正在建设中",
+      "portedDesc": "此部分正在从 KMP 版本移植。"
+    },
+    "about": {
+      "version": "应用程序版本",
+      "updates": "检查是否有新版本",
+      "updatesBtn": "检查更新",
+      "contributorsDesc": "参与构建项目的人们",
+      "contributorsBtn": "贡献者",
+      "sponsorsDesc": "在爱发电上查看赞助者",
+      "sponsorsBtn": "赞助者",
+      "licensesDesc": "开源软件许可协议",
+      "licensesBtn": "开源协议",
+      "logsDesc": "导出调试日志文件",
+      "logsBtn": "导出日志"
+    }
+  },
+  "dialogs": {
+    "close": "关闭",
+    "contributors": {
+      "title": "贡献者",
+      "loading": "正在加载贡献者...",
+      "count": "{count} 位贡献者",
+      "empty": "暂无贡献者"
+    },
+    "sponsors": {
+      "title": "赞助者",
+      "loading": "正在加载赞助者...",
+      "count": "{count} 位赞助者",
+      "empty": "暂无赞助者",
+      "disclaimer": "仅显示在爱发电上对项目创建者 LanRhyme 的个人赞助。",
+      "sponsorBtn": "去赞助"
+    },
+    "licenses": {
+      "title": "开源协议",
+      "loading": "正在加载协议..."
+    },
+    "update": {
+      "checking": "正在检查更新...",
+      "available": "发现新版本：{version}\n你想要打开发布页面吗？",
+      "latest": "你使用的已经是最新版本。",
+      "failed": "检查更新失败：{error}"
+    },
+    "logs": {
+      "success": "日志导出成功。",
+      "failed": "导出日志失败：{error}"
+    }
+  }
+}

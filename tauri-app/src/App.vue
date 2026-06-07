@@ -126,7 +126,7 @@ const micScale = computed(() => {
         <div class="w-[38%] flex flex-col gap-3">
           <!-- Mode Card -->
           <div class="haze-surface rounded-2xl p-3 flex flex-col gap-2">
-            <span class="text-xs text-on-surface-variant font-medium">CONNECTION MODE</span>
+            <span class="text-xs text-on-surface-variant font-medium">{{ $t('app.connectionMode') }}</span>
             <div class="flex gap-1.5">
               <button 
                 @click="connectionMode = 'wifi'"
@@ -149,7 +149,7 @@ const micScale = computed(() => {
 
           <!-- Port Card -->
           <div class="haze-surface rounded-2xl p-3 flex flex-col gap-2">
-            <span class="text-xs text-on-surface-variant font-medium">PORT</span>
+            <span class="text-xs text-on-surface-variant font-medium">{{ $t('app.port') }}</span>
             <input 
               v-model="serverPort"
               type="number" 
@@ -165,9 +165,9 @@ const micScale = computed(() => {
               <RadioTower v-else class="w-6 h-6" :class="{ 'animate-ping': serverState === 'connecting' }" />
             </div>
             <div>
-              <h3 class="text-sm font-bold">{{ serverState === 'streaming' ? 'Receiving Audio' : (serverState === 'connecting' ? 'Waiting for Device...' : 'Ready') }}</h3>
+              <h3 class="text-sm font-bold">{{ serverState === 'streaming' ? $t('app.status.streaming') : (serverState === 'connecting' ? $t('app.status.connecting') : $t('app.status.ready')) }}</h3>
               <p class="text-xs text-on-surface-variant mt-1 max-w-[200px]">
-                {{ serverState === 'streaming' ? 'Connected to Android device successfully.' : (serverState === 'connecting' ? 'Listening on port ' + serverPort : 'Click start to wait for connections.') }}
+                {{ serverState === 'streaming' ? $t('app.status.streamingDesc') : (serverState === 'connecting' ? $t('app.status.connectingDesc', { port: serverPort }) : $t('app.status.readyDesc')) }}
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ const micScale = computed(() => {
           </div>
           
           <div class="absolute bottom-6 font-mono text-sm text-primary/80 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-            Level: {{ audioLevel }}
+            {{ $t('app.level') }} {{ audioLevel }}
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@ const micScale = computed(() => {
       <div class="haze-surface rounded-2xl p-2 flex justify-between items-center flex-shrink-0">
         <div class="flex items-center px-3">
           <div class="w-2 h-2 rounded-full mr-2" :class="serverState === 'streaming' ? 'bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]' : (serverState === 'connecting' ? 'bg-yellow-500 animate-pulse shadow-[0_0_8px_#eab308]' : 'bg-on-surface-variant')"></div>
-          <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">{{ serverState === 'streaming' ? 'STREAMING' : (serverState === 'connecting' ? 'CONNECTING...' : 'IDLE') }}</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">{{ serverState === 'streaming' ? $t('app.status.stateStreaming') : (serverState === 'connecting' ? $t('app.status.stateConnecting') : $t('app.status.stateIdle')) }}</span>
         </div>
         
         <div class="flex items-center gap-2 pr-1">
@@ -211,7 +211,7 @@ const micScale = computed(() => {
           >
             <Square v-if="serverState !== 'idle'" class="w-4 h-4" />
             <Play v-else class="w-4 h-4" />
-            {{ serverState !== 'idle' ? 'STOP' : 'START' }}
+            {{ serverState !== 'idle' ? $t('app.stop') : $t('app.start') }}
           </button>
         </div>
       </div>

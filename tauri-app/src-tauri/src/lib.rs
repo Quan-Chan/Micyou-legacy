@@ -5,7 +5,7 @@ pub mod udp_server;
 pub mod audio_engine;
 pub mod jitter_buffer;
 pub mod dsp;
-
+pub mod commands;
 pub mod adb_manager;
 
 use tauri::{Emitter, AppHandle, State};
@@ -253,11 +253,24 @@ pub fn run() {
             mdns_manager: Arc::new(Mutex::new(None)),
             dsp_settings: Arc::new(RwLock::new(AudioDspSettings::default())),
         })
+        .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|_app| {
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, enable_usb_mode, get_network_info, get_audio_devices, update_audio_settings, start_server, stop_server])
+        .invoke_handler(tauri::generate_handler![
+            greet, 
+            enable_usb_mode, 
+            get_network_info, 
+            get_audio_devices, 
+            update_audio_settings, 
+            start_server, 
+            stop_server,
+            commands::about::get_sponsors,
+            commands::about::export_log,
+            commands::about::get_app_version
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

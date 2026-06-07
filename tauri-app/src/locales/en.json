@@ -1,0 +1,118 @@
+{
+  "app": {
+    "connectionMode": "CONNECTION MODE",
+    "port": "PORT",
+    "level": "Level:",
+    "start": "START",
+    "stop": "STOP",
+    "status": {
+      "streaming": "Receiving Audio",
+      "connecting": "Waiting for Device...",
+      "ready": "Ready",
+      "streamingDesc": "Connected to Android device successfully.",
+      "connectingDesc": "Listening on port {port}",
+      "readyDesc": "Click start to wait for connections.",
+      "stateStreaming": "STREAMING",
+      "stateConnecting": "CONNECTING...",
+      "stateIdle": "IDLE",
+      "wifi": "Connected via Wi-Fi",
+      "usb": "Connected via USB",
+      "disconnected": "Not Connected",
+      "waiting": "Waiting for connection...",
+      "running": "MicYou Server Running"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "categories": {
+      "general": "General",
+      "audio": "Audio",
+      "plugins": "Plugins",
+      "about": "About"
+    },
+    "language": {
+      "title": "Language",
+      "desc": "Choose application language",
+      "system": "System"
+    },
+    "vbcable": {
+      "title": "VB-Cable Forwarding",
+      "installed": "Installed",
+      "notDetected": "Not Detected",
+      "desc": "To route audio to other applications (like OBS or Discord), you need to install VB-Audio Virtual Cable.",
+      "download": "Download VB-Cable"
+    },
+    "audioOutput": {
+      "title": "Output Device",
+      "desc": "Where should the microphone audio be played?",
+      "systemDefault": "System Default",
+      "routingActive": "VB-CABLE routing is active. Audio will be forwarded to \"CABLE Output\"."
+    },
+    "spectrum": {
+      "title": "Real-Time Spectrum",
+      "raw": "Raw",
+      "processed": "Processed"
+    },
+    "audioParams": {
+      "gain": "Gain",
+      "noiseSuppression": "Noise Suppression",
+      "intensity": "Intensity",
+      "dereverb": "Dereverb",
+      "level": "Level",
+      "agc": "Auto Gain Control",
+      "target": "Target",
+      "attack": "Attack",
+      "decay": "Decay",
+      "vad": "Voice Activity Detection",
+      "threshold": "Threshold"
+    },
+    "plugins": {
+      "underConstruction": "Under Construction",
+      "portedDesc": "This section is being ported from the KMP version."
+    },
+    "about": {
+      "version": "Application Version",
+      "updates": "Check for updates",
+      "updatesBtn": "Updates",
+      "contributorsDesc": "People who helped build this",
+      "contributorsBtn": "Contributors",
+      "sponsorsDesc": "View Aifadian sponsors",
+      "sponsorsBtn": "Sponsors",
+      "licensesDesc": "Open source software licenses",
+      "licensesBtn": "Licenses",
+      "logsDesc": "Export debug logs",
+      "logsBtn": "Export Logs"
+    }
+  },
+  "dialogs": {
+    "close": "Close",
+    "contributors": {
+      "title": "Contributors",
+      "loading": "Loading contributors...",
+      "count": "{count} contributors",
+      "empty": "No contributors found"
+    },
+    "sponsors": {
+      "title": "Sponsors",
+      "loading": "Loading sponsors...",
+      "count": "{count} sponsors",
+      "empty": "No sponsors yet",
+      "disclaimer": "Only showing personal sponsorships to the project creator LanRhyme on Aifadian.",
+      "sponsorBtn": "Sponsor"
+    },
+    "licenses": {
+      "title": "Open Source Licenses",
+      "loading": "Loading licenses..."
+    },
+    "update": {
+      "checking": "Checking for updates...",
+      "available": "New version available: {version}\nDo you want to open the release page?",
+      "latest": "You are using the latest version.",
+      "failed": "Failed to check for updates: {error}"
+    },
+    "logs": {
+      "success": "Log exported successfully.",
+      "failed": "Failed to export log: {error}"
+    }
+  }
+}

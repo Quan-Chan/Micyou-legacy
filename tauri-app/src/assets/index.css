@@ -3,64 +3,250 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 90 10% 98%;
-    --foreground: 90 10% 10%;
+  /* --- Theme: Blue (Default) --- */
+  :root, .theme-blue {
+    --background: 215 15% 96%;
+    --foreground: 215 15% 25%;
+    --surface: 215 15% 98%;
+    --on-surface: 215 15% 25%;
+    --surface-bright: 215 15% 98%;
+    --surface-container: 215 15% 92%;
+    --surface-container-low: 215 15% 94%;
+    --surface-variant: 215 15% 88%;
+    --on-surface-variant: 215 15% 45%;
+    --outline: 215 15% 80%;
+    --border: 215 15% 80%;
     
-    --primary: 90 39% 35%;
-    --on-primary: 0 0% 100%;
-    --primary-container: 90 40% 90%;
-    --on-primary-container: 90 50% 10%;
+    --primary: 215 35% 55%;
+    --on-primary: 215 35% 92%;
+    --primary-container: 215 35% 85%;
+    --on-primary-container: 215 35% 25%;
     
-    --secondary: 90 20% 40%;
-    --on-secondary: 0 0% 100%;
-    --secondary-container: 90 30% 90%;
-    --on-secondary-container: 90 30% 10%;
-    
-    --tertiary: 140 30% 40%;
-    --on-tertiary: 0 0% 100%;
-    
-    --surface: 90 10% 98%;
-    --on-surface: 90 10% 10%;
-    --surface-variant: 90 10% 90%;
-    --on-surface-variant: 90 10% 30%;
-    
-    --surface-container: 90 10% 94%;
-    --surface-bright: 90 10% 98%;
-    
-    --outline: 90 10% 60%;
-    --border: 90 10% 85%;
-    
+    --secondary: 215 20% 90%;
+    --on-secondary: 215 20% 25%;
+    --secondary-container: 215 20% 90%;
+    --on-secondary-container: 215 20% 25%;
+    --tertiary: 215 20% 90%;
+    --on-tertiary: 215 20% 25%;
+    --error: 0 40% 55%;
+    --on-error: 0 40% 92%;
     --radius: 1rem;
+    
+    /* Default UI Style (Solid) */
+    --haze-bg: hsl(var(--surface-bright));
+    --haze-border: hsl(var(--border));
+    --haze-backdrop: none;
   }
-  
-  .dark {
-    --background: 90 10% 6%;
-    --foreground: 90 10% 90%;
+
+  .dark.theme-blue, .dark .theme-blue {
+    --background: 215 15% 8%;
+    --foreground: 215 15% 85%;
+    --surface: 215 15% 10%;
+    --on-surface: 215 15% 85%;
+    --surface-bright: 215 15% 14%;
+    --surface-container: 215 15% 16%;
+    --surface-container-low: 215 15% 12%;
+    --surface-variant: 215 15% 22%;
+    --on-surface-variant: 215 15% 60%;
+    --outline: 215 15% 20%;
+    --border: 215 15% 20%;
     
-    --primary: 90 39% 70%;
-    --on-primary: 90 50% 20%;
-    --primary-container: 90 40% 25%;
-    --on-primary-container: 90 40% 90%;
+    --primary: 215 35% 65%;
+    --on-primary: 215 35% 20%;
+    --primary-container: 215 35% 25%;
+    --on-primary-container: 215 35% 85%;
     
-    --secondary: 90 20% 70%;
-    --on-secondary: 90 30% 20%;
-    --secondary-container: 90 20% 30%;
-    --on-secondary-container: 90 30% 90%;
+    --secondary: 215 20% 16%;
+    --on-secondary: 215 20% 85%;
+    --secondary-container: 215 20% 16%;
+    --on-secondary-container: 215 20% 85%;
+    --tertiary: 215 20% 16%;
+    --on-tertiary: 215 20% 85%;
+    --error: 0 40% 65%;
+    --on-error: 0 40% 20%;
+  }
+
+  /* --- Theme: Green --- */
+  .theme-green {
+    --background: 150 15% 96%;
+    --foreground: 150 15% 25%;
+    --surface: 150 15% 98%;
+    --on-surface: 150 15% 25%;
+    --surface-bright: 150 15% 98%;
+    --surface-container: 150 15% 92%;
+    --surface-container-low: 150 15% 94%;
+    --surface-variant: 150 15% 88%;
+    --on-surface-variant: 150 15% 45%;
+    --outline: 150 15% 80%;
+    --border: 150 15% 80%;
     
-    --tertiary: 140 30% 70%;
-    --on-tertiary: 140 30% 20%;
+    --primary: 150 30% 50%;
+    --on-primary: 150 30% 92%;
+    --primary-container: 150 30% 85%;
+    --on-primary-container: 150 30% 25%;
     
-    --surface: 90 10% 6%;
-    --on-surface: 90 10% 90%;
-    --surface-variant: 90 10% 20%;
-    --on-surface-variant: 90 10% 80%;
+    --secondary: 150 20% 90%;
+    --on-secondary: 150 20% 25%;
+    --secondary-container: 150 20% 90%;
+    --on-secondary-container: 150 20% 25%;
+    --tertiary: 150 20% 90%;
+    --on-tertiary: 150 20% 25%;
+    --error: 0 40% 55%;
+    --on-error: 0 40% 92%;
+  }
+
+  .dark.theme-green {
+    --background: 150 15% 8%;
+    --foreground: 150 15% 85%;
+    --surface: 150 15% 10%;
+    --on-surface: 150 15% 85%;
+    --surface-bright: 150 15% 14%;
+    --surface-container: 150 15% 16%;
+    --surface-container-low: 150 15% 12%;
+    --surface-variant: 150 15% 22%;
+    --on-surface-variant: 150 15% 60%;
+    --outline: 150 15% 20%;
+    --border: 150 15% 20%;
     
-    --surface-container: 90 10% 12%;
-    --surface-bright: 90 10% 24%;
+    --primary: 150 30% 60%;
+    --on-primary: 150 30% 20%;
+    --primary-container: 150 30% 25%;
+    --on-primary-container: 150 30% 85%;
     
-    --outline: 90 10% 40%;
-    --border: 90 10% 20%;
+    --secondary: 150 20% 16%;
+    --on-secondary: 150 20% 85%;
+    --secondary-container: 150 20% 16%;
+    --on-secondary-container: 150 20% 85%;
+    --tertiary: 150 20% 16%;
+    --on-tertiary: 150 20% 85%;
+    --error: 0 40% 65%;
+    --on-error: 0 40% 20%;
+  }
+
+  /* --- Theme: Rose --- */
+  .theme-rose {
+    --background: 340 15% 96%;
+    --foreground: 340 15% 25%;
+    --surface: 340 15% 98%;
+    --on-surface: 340 15% 25%;
+    --surface-bright: 340 15% 98%;
+    --surface-container: 340 15% 92%;
+    --surface-container-low: 340 15% 94%;
+    --surface-variant: 340 15% 88%;
+    --on-surface-variant: 340 15% 45%;
+    --outline: 340 15% 80%;
+    --border: 340 15% 80%;
+    
+    --primary: 340 35% 55%;
+    --on-primary: 340 35% 92%;
+    --primary-container: 340 35% 85%;
+    --on-primary-container: 340 35% 25%;
+    
+    --secondary: 340 20% 90%;
+    --on-secondary: 340 20% 25%;
+    --secondary-container: 340 20% 90%;
+    --on-secondary-container: 340 20% 25%;
+    --tertiary: 340 20% 90%;
+    --on-tertiary: 340 20% 25%;
+    --error: 0 40% 55%;
+    --on-error: 0 40% 92%;
+  }
+
+  .dark.theme-rose {
+    --background: 340 15% 8%;
+    --foreground: 340 15% 85%;
+    --surface: 340 15% 10%;
+    --on-surface: 340 15% 85%;
+    --surface-bright: 340 15% 14%;
+    --surface-container: 340 15% 16%;
+    --surface-container-low: 340 15% 12%;
+    --surface-variant: 340 15% 22%;
+    --on-surface-variant: 340 15% 60%;
+    --outline: 340 15% 20%;
+    --border: 340 15% 20%;
+    
+    --primary: 340 35% 65%;
+    --on-primary: 340 35% 20%;
+    --primary-container: 340 35% 25%;
+    --on-primary-container: 340 35% 85%;
+    
+    --secondary: 340 20% 16%;
+    --on-secondary: 340 20% 85%;
+    --secondary-container: 340 20% 16%;
+    --on-secondary-container: 340 20% 85%;
+    --tertiary: 340 20% 16%;
+    --on-tertiary: 340 20% 85%;
+    --error: 0 40% 65%;
+    --on-error: 0 40% 20%;
+  }
+
+  /* --- Theme: Purple --- */
+  .theme-purple {
+    --background: 260 15% 96%;
+    --foreground: 260 15% 25%;
+    --surface: 260 15% 98%;
+    --on-surface: 260 15% 25%;
+    --surface-bright: 260 15% 98%;
+    --surface-container: 260 15% 92%;
+    --surface-container-low: 260 15% 94%;
+    --surface-variant: 260 15% 88%;
+    --on-surface-variant: 260 15% 45%;
+    --outline: 260 15% 80%;
+    --border: 260 15% 80%;
+    
+    --primary: 260 30% 55%;
+    --on-primary: 260 30% 92%;
+    --primary-container: 260 30% 85%;
+    --on-primary-container: 260 30% 25%;
+    
+    --secondary: 260 20% 90%;
+    --on-secondary: 260 20% 25%;
+    --secondary-container: 260 20% 90%;
+    --on-secondary-container: 260 20% 25%;
+    --tertiary: 260 20% 90%;
+    --on-tertiary: 260 20% 25%;
+    --error: 0 40% 55%;
+    --on-error: 0 40% 92%;
+  }
+
+  .dark.theme-purple {
+    --background: 260 15% 8%;
+    --foreground: 260 15% 85%;
+    --surface: 260 15% 10%;
+    --on-surface: 260 15% 85%;
+    --surface-bright: 260 15% 14%;
+    --surface-container: 260 15% 16%;
+    --surface-container-low: 260 15% 12%;
+    --surface-variant: 260 15% 22%;
+    --on-surface-variant: 260 15% 60%;
+    --outline: 260 15% 20%;
+    --border: 260 15% 20%;
+    
+    --primary: 260 30% 65%;
+    --on-primary: 260 30% 20%;
+    --primary-container: 260 30% 25%;
+    --on-primary-container: 260 30% 85%;
+    
+    --secondary: 260 20% 16%;
+    --on-secondary: 260 20% 85%;
+    --secondary-container: 260 20% 16%;
+    --on-secondary-container: 260 20% 85%;
+    --tertiary: 260 20% 16%;
+    --on-tertiary: 260 20% 85%;
+    --error: 0 40% 65%;
+    --on-error: 0 40% 20%;
+  }
+
+  /* --- UI Styles (UI 风格) --- */
+  .style-glass {
+    --haze-bg: hsl(var(--surface-bright) / 0.65);
+    --haze-border: hsl(var(--border) / 0.3);
+    --haze-backdrop: blur(20px);
+  }
+  .dark.style-glass, .style-glass .dark {
+    --haze-bg: hsl(var(--surface-bright) / 0.4);
+    --haze-border: hsl(var(--border) / 0.2);
+    --haze-backdrop: blur(20px);
   }
 }
 
@@ -69,7 +255,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-surface-container text-foreground;
+    @apply bg-surface-container-low text-foreground;
   }
   
   /* Custom Scrollbar */
@@ -90,6 +276,10 @@
 
 @layer utilities {
   .haze-surface {
-    @apply bg-surface-bright rounded-2xl shadow-sm border border-transparent;
+    background-color: var(--haze-bg);
+    border-color: var(--haze-border);
+    backdrop-filter: var(--haze-backdrop);
+    -webkit-backdrop-filter: var(--haze-backdrop);
+    @apply rounded-2xl shadow-sm border;
   }
 }

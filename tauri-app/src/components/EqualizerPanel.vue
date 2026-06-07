@@ -20,7 +20,7 @@
       <div class="bg-surface-bright rounded-2xl p-4 shadow-sm">
         <h4 class="text-sm font-bold text-on-surface mb-3">{{ $t('settings.equalizer.presets') }}</h4>
         <div class="relative">
-          <Select :model-value="selectedPreset" @update:model-value="val => { selectedPreset = val; applyPreset(); }">
+          <Select :model-value="selectedPreset" @update:model-value="val => { selectedPreset = val as string; applyPreset(); }">
             <SelectTrigger class="w-full bg-surface-container border-none shadow-none rounded-xl h-10 px-4 font-medium text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -65,68 +65,65 @@
     <div class="bg-surface-bright rounded-3xl p-6 shadow-sm flex-1 flex flex-col min-h-[320px] relative overflow-hidden" :class="{ 'opacity-50 pointer-events-none': !config.enabled }">
       
       <!-- Y-Axis Labels -->
-      <div class="absolute left-3 top-6 bottom-10 flex flex-col justify-between text-[10px] text-on-surface-variant/60 font-mono pointer-events-none z-10">
+      <div class="absolute left-3 top-12 bottom-12 flex flex-col justify-between text-[10px] text-on-surface-variant/60 font-mono pointer-events-none z-10">
         <span>+15</span>
         <span>0</span>
         <span>-15</span>
       </div>
 
       <!-- Horizontal Grid Lines -->
-      <div class="absolute left-8 right-6 top-6 bottom-10 flex flex-col justify-between pointer-events-none z-0">
+      <div class="absolute left-8 right-6 top-12 bottom-12 flex flex-col justify-between pointer-events-none z-0">
         <div class="w-full h-px bg-surface-variant/10"></div>
         <div class="w-full h-px bg-surface-variant/30 border-t border-dashed border-primary/20"></div>
         <div class="w-full h-px bg-surface-variant/10"></div>
       </div>
 
       <!-- 10 Vertical Sliders Area -->
-      <div class="flex-1 flex items-stretch ml-8 mr-2 relative z-10">
+      <div class="flex-1 flex flex-col ml-8 mr-2 relative z-10 py-6">
         
-        <!-- Curve Shadow Visualization -->
-        <div class="absolute inset-y-6 inset-x-0 pointer-events-none z-0">
-          <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-            <defs>
-              <linearGradient id="eq-gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="hsl(var(--primary))" stop-opacity="0.15" />
-                <stop offset="100%" stop-color="hsl(var(--primary))" stop-opacity="0.0" />
-              </linearGradient>
-            </defs>
-            <path :d="svgPathFilled" fill="url(#eq-gradient)" />
-            <path :d="svgPathLine" fill="none" stroke="hsl(var(--primary))" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-40" vector-effect="non-scaling-stroke" />
-          </svg>
-        </div>
+        <!-- Sliders and Curve Container -->
+        <div class="flex-1 flex relative">
+          <!-- Curve Shadow Visualization -->
+          <div class="absolute inset-0 pointer-events-none z-0">
+            <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
+              <path :d="svgPathLine" fill="none" stroke="hsl(var(--primary))" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-100" vector-effect="non-scaling-stroke" />
+            </svg>
+          </div>
 
-        <div v-for="(band, index) in bands" :key="index" class="flex-1 flex flex-col items-center justify-between group z-10">
-          <!-- The Vertical Slider (Inverted range visually) -->
-          <div class="relative w-full flex-1 flex items-center justify-center my-6">
-            <input 
-              type="range" 
-              v-model.number="config.gains[index]" 
-              min="-15" 
-              max="15" 
-              step="0.1"
-              @input="onSliderInput"
-              class="eq-slider absolute h-full w-4 appearance-none bg-transparent cursor-pointer"
-            />
-            <!-- Visual Track -->
-            <div class="absolute h-full w-1.5 bg-surface-variant/20 rounded-full pointer-events-none overflow-hidden group-hover:bg-surface-variant/30 transition-colors">
-               <!-- Active track fill -->
-               <div class="absolute bottom-1/2 w-full bg-primary/40" v-if="config.gains[index] > 0" :style="{ height: `${(config.gains[index] / 15) * 50}%` }"></div>
-               <div class="absolute top-1/2 w-full bg-primary/40" v-else-if="config.gains[index] < 0" :style="{ height: `${(-config.gains[index] / 15) * 50}%` }"></div>
+          <!-- 10 Slider Tracks -->
+          <div v-for="(band, index) in bands" :key="index" class="flex-1 flex justify-center group z-10 relative">
+            <div class="relative w-full h-full flex items-center justify-center">
+              <input 
+                type="range" 
+                v-model.number="config.gains[index]" 
+                min="-15" 
+                max="15" 
+                step="0.1"
+                @input="onSliderInput"
+                class="eq-slider absolute h-full w-4 appearance-none bg-transparent cursor-pointer"
+              />
+              <!-- Visual Track -->
+              <div class="absolute h-full w-1.5 bg-surface-variant/20 rounded-full pointer-events-none overflow-hidden group-hover:bg-surface-variant/30 transition-colors">
+                 <!-- Active track fill -->
+                 <div class="absolute bottom-1/2 w-full bg-primary/40" v-if="config.gains[index] > 0" :style="{ height: `${(config.gains[index] / 15) * 50}%` }"></div>
+                 <div class="absolute top-1/2 w-full bg-primary/40" v-else-if="config.gains[index] < 0" :style="{ height: `${(-config.gains[index] / 15) * 50}%` }"></div>
+              </div>
+              <!-- Thumb Proxy (Purely visual) -->
+              <div 
+                class="absolute w-4 h-4 bg-surface-bright border-2 border-primary rounded-full shadow-md pointer-events-none transition-transform group-hover:scale-110"
+                :style="{ bottom: `${50 + (config.gains[index] / 15) * 50}%`, transform: 'translateY(50%)' }"
+              ></div>
+              
+              <!-- Current Value Tooltip-like label -->
+              <div class="text-[9px] font-mono text-primary/70 opacity-0 group-hover:opacity-100 transition-opacity absolute -top-5 whitespace-nowrap">
+                {{ config.gains[index] > 0 ? '+' : '' }}{{ config.gains[index].toFixed(1) }}
+              </div>
             </div>
-            <!-- Thumb Proxy (Purely visual) -->
-            <div 
-              class="absolute w-4 h-4 bg-surface-bright border-2 border-primary rounded-full shadow-md pointer-events-none transition-transform group-hover:scale-110"
-              :style="{ bottom: `${50 + (config.gains[index] / 15) * 50}%`, transform: 'translateY(50%)' }"
-            ></div>
-          </div>
-          
-          <!-- X-Axis Label -->
-          <div class="text-[10px] font-mono font-medium text-on-surface-variant group-hover:text-primary transition-colors text-center w-full">
-            {{ formatBand(band) }}
-          </div>
-          <!-- Current Value Tooltip-like label -->
-          <div class="text-[9px] font-mono text-primary/70 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0 whitespace-nowrap">
-            {{ config.gains[index] > 0 ? '+' : '' }}{{ config.gains[index].toFixed(1) }}
+            
+            <!-- X-Axis Label -->
+            <div class="absolute -bottom-6 text-[10px] font-mono font-medium text-on-surface-variant group-hover:text-primary transition-colors text-center w-full">
+              {{ formatBand(band) }}
+            </div>
           </div>
         </div>
       </div>
@@ -180,7 +177,6 @@ const onSliderInput = () => {
 };
 
 // --- SVG Curve Generation ---
-const svgContainer = ref<HTMLElement | null>(null);
 
 // Generate path strings for the SVG shadow
 const createSpline = (points: {x: number, y: number}[]) => {
@@ -219,14 +215,10 @@ const svgPaths = computed(() => {
   
   const linePath = createSpline(points);
   
-  // Filled path adds points to close the shape at the bottom
-  const filledPath = linePath ? `${linePath} L 100,100 L 0,100 Z` : '';
-  
-  return { line: linePath, filled: filledPath };
+  return { line: linePath, filled: '' };
 });
 
 const svgPathLine = computed(() => svgPaths.value.line);
-const svgPathFilled = computed(() => svgPaths.value.filled);
 
 </script>
 

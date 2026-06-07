@@ -26,6 +26,7 @@
     "title": "Settings",
     "categories": {
       "general": "General",
+      "appearance": "Appearance",
       "audio": "Audio",
       "plugins": "Plugins",
       "about": "About"
@@ -34,6 +35,27 @@
       "title": "Language",
       "desc": "Choose application language",
       "system": "System"
+    },
+    "theme": {
+      "title": "Theme",
+      "desc": "Choose application theme",
+      "auto": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "themeColor": {
+      "title": "Theme Color",
+      "desc": "Choose your primary brand color",
+      "blue": "Blue",
+      "green": "Green",
+      "rose": "Rose",
+      "purple": "Purple"
+    },
+    "uiStyle": {
+      "title": "UI Style",
+      "desc": "Choose application aesthetic",
+      "default": "Default Solid",
+      "glass": "Glassmorphism"
     },
     "vbcable": {
       "title": "VB-Cable Forwarding",

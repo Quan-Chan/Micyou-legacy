@@ -43,14 +43,8 @@ const dotY = computed(() => 50 + 35 * Math.sin(normalizedLevel.value * Math.PI *
       </g>
     </svg>
     
-    <!-- Inner Glow -->
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div class="rounded-full bg-primary blur-2xl transition-all duration-100 ease-linear"
-           :style="{ width: `${normalizedLevel * 60}%`, height: `${normalizedLevel * 60}%`, opacity: normalizedLevel * 0.3 }"></div>
-    </div>
-    
     <!-- Slot for the Mic icon in the center -->
-    <div class="relative z-10 w-24 h-24 rounded-full bg-gradient-to-br from-primary/80 to-tertiary/80 flex items-center justify-center shadow-[0_0_30px_rgba(var(--primary),0.3)]">
+    <div class="relative z-10 w-24 h-24 rounded-full bg-primary flex items-center justify-center shadow-md">
       <slot></slot>
     </div>
   </div>

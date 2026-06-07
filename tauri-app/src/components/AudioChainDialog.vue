@@ -25,7 +25,7 @@
                class="flex items-center bg-surface-container rounded-xl p-3 border-2 transition-all shadow-sm group select-none relative"
                :class="draggedIndex === index ? 'opacity-40 border-primary scale-[0.98] pointer-events-none' : 'border-transparent hover:border-primary/30'">
             
-            <div @pointerdown.prevent="onPointerDown($event, index)"
+            <div @pointerdown.prevent="onPointerDown(index)"
                  class="w-8 h-8 -ml-2 mr-1 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-surface-variant/50 rounded-lg group-hover:text-primary transition-colors opacity-50 group-hover:opacity-100 touch-none">
               <GripVertical class="w-5 h-5 text-on-surface-variant" />
             </div>
@@ -44,6 +44,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue';
+import { invoke } from '@tauri-apps/api/core';
 import { X, GripVertical, RotateCcw } from 'lucide-vue-next';
 
 const props = defineProps<{ isOpen: boolean, chain: string[] }>();
@@ -57,9 +58,9 @@ watch(() => props.isOpen, (newVal) => {
   }
 });
 
-const draggedIndex = ref(-1);
+const draggedIndex = ref<number>(-1);
 
-const onPointerDown = (e: PointerEvent, index: number) => {
+const onPointerDown = (index: number) => {
   draggedIndex.value = index;
   
   if (typeof window !== 'undefined') {
@@ -93,8 +94,9 @@ const onPointerMove = (e: PointerEvent) => {
   }
 };
 
-const onPointerUp = () => {
+const onPointerUp = async () => {
   if (draggedIndex.value !== -1) {
+    await invoke('save_audio_chain', { chain: localChain.value }).catch(() => {});
     emit('update:chain', localChain.value);
   }
   draggedIndex.value = -1;

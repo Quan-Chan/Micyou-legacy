@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watchEffect } from 'vue';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
+import { useStorage } from '@vueuse/core';
 
 // Icons
 import { Mic, Wifi, RadioTower, Globe, ChevronDown, CheckCircle2, Play, Square, Settings, Puzzle } from 'lucide-vue-next';
@@ -19,19 +20,27 @@ const selectedIp = ref<string>('0.0.0.0');
 const isSettingsOpen = ref(false);
 const outputDevice = ref<string>(localStorage.getItem('micyou_output_device') || '');
 
-// Header Animation State
-const headerColorIndex = ref(0);
-const headerColors = ['text-primary', 'text-tertiary'];
-let colorInterval: number;
+// Global Theme and UI Style Management
+const themeColor = useStorage('micyou_theme_color', 'theme-blue');
+const uiStyle = useStorage('micyou_ui_style', 'style-glass');
+
+watchEffect(() => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.remove('theme-blue', 'theme-green', 'theme-rose', 'theme-purple');
+    document.documentElement.classList.remove('style-default', 'style-glass');
+    
+    if (themeColor.value) document.documentElement.classList.add(themeColor.value);
+    if (uiStyle.value) document.documentElement.classList.add(uiStyle.value);
+  }
+});
+
+
 
 let unlistenAudioLevel: UnlistenFn | null = null;
 let unlistenDeviceConnected: UnlistenFn | null = null;
 let unlistenDeviceDisconnected: UnlistenFn | null = null;
 
 onMounted(async () => {
-  colorInterval = window.setInterval(() => {
-    headerColorIndex.value = (headerColorIndex.value + 1) % headerColors.length;
-  }, 4000);
 
   try {
     networkInfo.value = await invoke<{ ips: string[], port: number }>('get_network_info');
@@ -59,7 +68,6 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (colorInterval) clearInterval(colorInterval);
   if (unlistenAudioLevel) unlistenAudioLevel();
   if (unlistenDeviceConnected) unlistenDeviceConnected();
   if (unlistenDeviceDisconnected) unlistenDeviceDisconnected();
@@ -108,7 +116,7 @@ const micScale = computed(() => {
             <RadioTower class="w-5 h-5 text-primary" />
           </div>
           <div class="flex flex-col">
-            <span class="text-sm font-extrabold transition-colors duration-[4000ms]" :class="headerColors[headerColorIndex]">MicYou Desktop</span>
+            <span class="text-sm font-extrabold text-primary">MicYou Desktop</span>
             <span class="text-[11px] text-on-surface-variant font-medium">Server</span>
           </div>
         </div>

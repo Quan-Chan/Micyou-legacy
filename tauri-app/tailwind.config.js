@@ -56,6 +56,10 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "on-primary": "hsl(var(--on-primary))",
+        "on-secondary": "hsl(var(--on-secondary))",
+        error: "hsl(var(--error))",
+        "on-error": "hsl(var(--on-error))",
         "primary-container": "hsl(var(--primary-container))",
         "on-primary-container": "hsl(var(--on-primary-container))",
         "secondary-container": "hsl(var(--secondary-container))",
@@ -67,6 +71,7 @@ module.exports = {
         "surface-variant": "hsl(var(--surface-variant))",
         "on-surface-variant": "hsl(var(--on-surface-variant))",
         "surface-container": "hsl(var(--surface-container))",
+        "surface-container-low": "hsl(var(--surface-container-low))",
         "surface-bright": "hsl(var(--surface-bright))",
       },
       borderRadius: {

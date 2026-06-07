@@ -1,4 +1,4 @@
-import { themeFromSourceColor, argbFromHex } from "@material/material-color-utilities";
+import { Hct, SchemeTonalSpot, argbFromHex, MaterialDynamicColors } from "@material/material-color-utilities";
 
 function argbToHslString(argb) {
   const r = (argb >> 16) & 255;
@@ -26,9 +26,28 @@ function argbToHslString(argb) {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
-const theme = themeFromSourceColor(argbFromHex("#4A672D"));
-const sLight = theme.schemes.light.toJSON();
-const sDark = theme.schemes.dark.toJSON();
+const hct = Hct.fromInt(argbFromHex("#4A672D"));
+const schemeLight = new SchemeTonalSpot(hct, false, 0);
+const schemeDark = new SchemeTonalSpot(hct, true, 0);
+
+const colors = [
+  'primary', 'onPrimary', 'primaryContainer', 'onPrimaryContainer',
+  'secondary', 'onSecondary', 'secondaryContainer', 'onSecondaryContainer',
+  'tertiary', 'onTertiary', 'tertiaryContainer', 'onTertiaryContainer',
+  'error', 'onError', 'errorContainer', 'onErrorContainer',
+  'background', 'onBackground', 'surface', 'onSurface',
+  'surfaceVariant', 'onSurfaceVariant', 'outline', 'outlineVariant',
+  'shadow', 'scrim', 'inverseSurface', 'inverseOnSurface', 'inversePrimary',
+  'surfaceDim', 'surfaceBright', 'surfaceContainerLowest', 'surfaceContainerLow',
+  'surfaceContainer', 'surfaceContainerHigh', 'surfaceContainerHighest'
+];
+
+const sLight = {};
+const sDark = {};
+for (const color of colors) {
+    sLight[color] = MaterialDynamicColors[color].getArgb(schemeLight);
+    sDark[color] = MaterialDynamicColors[color].getArgb(schemeDark);
+}
 
 console.log(":root {");
 for(let key in sLight) {

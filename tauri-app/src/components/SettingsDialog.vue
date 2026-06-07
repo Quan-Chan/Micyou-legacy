@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-8 bg-black/40 backdrop-blur-sm">
+  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-8 bg-black/60">
     <div class="bg-surface-bright w-full max-w-5xl h-full max-h-[80vh] rounded-3xl flex overflow-hidden shadow-2xl relative border border-white/10">
       
       <!-- Close Button -->
@@ -90,6 +90,69 @@
             </div>
           </div>
 
+          <!-- APPEARANCE SECTION -->
+          <div v-if="currentSection === 'appearance'" class="space-y-6">
+            <!-- Theme Mode Settings -->
+            <div class="bg-surface-bright rounded-2xl p-4 flex items-center justify-between shadow-sm">
+              <div>
+                <h4 class="font-bold text-on-surface">{{ $t('settings.theme.title') }}</h4>
+                <p class="text-xs text-on-surface-variant">{{ $t('settings.theme.desc') }}</p>
+              </div>
+              <Select v-model="colorMode">
+                <SelectTrigger class="w-[140px] bg-surface-container border-none shadow-none rounded-lg text-sm font-medium">
+                  <SelectValue :placeholder="$t('settings.theme.auto')" />
+                </SelectTrigger>
+                <SelectContent class="border-surface-variant/20 rounded-lg bg-surface shadow-lg">
+                  <SelectGroup>
+                    <SelectItem value="auto">{{ $t('settings.theme.auto') }}</SelectItem>
+                    <SelectItem value="light">{{ $t('settings.theme.light') }}</SelectItem>
+                    <SelectItem value="dark">{{ $t('settings.theme.dark') }}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <!-- Theme Color Settings -->
+            <div class="bg-surface-bright rounded-2xl p-4 flex items-center justify-between shadow-sm">
+              <div>
+                <h4 class="font-bold text-on-surface">{{ $t('settings.themeColor.title') }}</h4>
+                <p class="text-xs text-on-surface-variant">{{ $t('settings.themeColor.desc') }}</p>
+              </div>
+              <Select v-model="themeColor">
+                <SelectTrigger class="w-[140px] bg-surface-container border-none shadow-none rounded-lg text-sm font-medium">
+                  <SelectValue :placeholder="$t('settings.themeColor.blue')" />
+                </SelectTrigger>
+                <SelectContent class="border-surface-variant/20 rounded-lg bg-surface shadow-lg">
+                  <SelectGroup>
+                    <SelectItem value="theme-blue">{{ $t('settings.themeColor.blue') }}</SelectItem>
+                    <SelectItem value="theme-green">{{ $t('settings.themeColor.green') }}</SelectItem>
+                    <SelectItem value="theme-rose">{{ $t('settings.themeColor.rose') }}</SelectItem>
+                    <SelectItem value="theme-purple">{{ $t('settings.themeColor.purple') }}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <!-- UI Style Settings -->
+            <div class="bg-surface-bright rounded-2xl p-4 flex items-center justify-between shadow-sm">
+              <div>
+                <h4 class="font-bold text-on-surface">{{ $t('settings.uiStyle.title') }}</h4>
+                <p class="text-xs text-on-surface-variant">{{ $t('settings.uiStyle.desc') }}</p>
+              </div>
+              <Select v-model="uiStyle">
+                <SelectTrigger class="w-[140px] bg-surface-container border-none shadow-none rounded-lg text-sm font-medium">
+                  <SelectValue :placeholder="$t('settings.uiStyle.glass')" />
+                </SelectTrigger>
+                <SelectContent class="border-surface-variant/20 rounded-lg bg-surface shadow-lg">
+                  <SelectGroup>
+                    <SelectItem value="style-default">{{ $t('settings.uiStyle.default') }}</SelectItem>
+                    <SelectItem value="style-glass">{{ $t('settings.uiStyle.glass') }}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <!-- AUDIO SECTION -->
           <div v-if="currentSection === 'audio'" class="space-y-6">
             
@@ -100,7 +163,7 @@
                 <h4 class="font-bold text-on-surface text-sm">{{ $t('settings.spectrum.title') }}</h4>
                 <div class="flex gap-4">
                   <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-sm bg-surface-variant/50"></div>
+                    <div class="w-3 h-3 rounded-sm bg-surface-variant"></div>
                     <span class="text-[10px] text-on-surface-variant">原始 (Raw)</span>
                   </div>
                   <div class="flex items-center gap-2">
@@ -109,7 +172,7 @@
                   </div>
                 </div>
               </div>
-              <div class="w-full h-32 bg-surface-container/30 rounded-xl overflow-hidden relative">
+              <div class="w-full h-32 bg-surface-container rounded-xl overflow-hidden relative">
                 <canvas ref="spectrumCanvas" class="w-full h-full"></canvas>
               </div>
             </div>
@@ -203,14 +266,14 @@
             </div>
 
             <!-- Audio Processing Chain -->
-            <div @click="showAudioChain = true" class="bg-surface-bright rounded-2xl p-4 shadow-sm space-y-3 cursor-pointer hover:bg-surface-variant/30 transition-colors group">
+            <div @click="showAudioChain = true" class="bg-surface-bright rounded-2xl p-4 shadow-sm space-y-3 cursor-pointer hover:bg-surface-variant transition-colors group">
               <div class="flex items-center justify-between">
                 <div>
                   <h4 class="font-bold text-on-surface">{{ $t('settings.audioChain.title') }}</h4>
                   <p class="text-xs text-on-surface-variant mt-0.5">{{ $t('settings.audioChain.descPopup') }}</p>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-colors">
-                  <ChevronRight class="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" />
+                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                  <ChevronRight class="w-4 h-4 text-on-surface-variant group-hover:text-on-primary transition-colors" />
                 </div>
               </div>
               
@@ -237,44 +300,44 @@
 
           <!-- ABOUT -->
           <div v-if="currentSection === 'about'" class="space-y-4 pb-12">
-            <div class="bg-surface-bright rounded-2xl overflow-hidden shadow-sm flex flex-col">
-              <div class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 transition-colors cursor-default">
+            <div class="bg-surface-bright rounded-2xl overflow-hidden shadow-sm flex flex-col border border-border">
+              <div class="flex items-center gap-4 p-4 hover:bg-surface-variant transition-colors cursor-default">
                 <User class="w-6 h-6 text-on-surface-variant flex-shrink-0" />
                 <div class="flex-1">
                   <h4 class="text-sm font-medium text-on-surface">Developer</h4>
                   <p class="text-xs text-on-surface-variant">LanRhyme、ChinsaaWei、ChouChiu</p>
                 </div>
               </div>
-              <div class="h-px bg-surface-variant/20 mx-4"></div>
+              <div class="h-px bg-border mx-4"></div>
               
-              <a href="https://github.com/LanRhyme/MicYou" target="_blank" class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 transition-colors cursor-pointer group">
+              <a href="https://github.com/LanRhyme/MicYou" target="_blank" class="flex items-center gap-4 p-4 hover:bg-surface-variant transition-colors cursor-pointer group">
                 <Globe class="w-6 h-6 text-on-surface-variant flex-shrink-0" />
                 <div class="flex-1">
                   <h4 class="text-sm font-medium text-on-surface">GitHub Repository</h4>
                   <p class="text-xs text-primary group-hover:underline">https://github.com/LanRhyme/MicYou</p>
                 </div>
               </a>
-              <div class="h-px bg-surface-variant/20 mx-4"></div>
+              <div class="h-px bg-border mx-4"></div>
 
-              <div @click="openDialog('Contributors')" class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 transition-colors cursor-pointer">
+              <div @click="openDialog('Contributors')" class="flex items-center gap-4 p-4 hover:bg-surface-variant transition-colors cursor-pointer">
                 <Users class="w-6 h-6 text-on-surface-variant flex-shrink-0" />
                 <div class="flex-1">
                   <h4 class="text-sm font-medium text-on-surface">{{ $t('settings.about.contributorsBtn') }}</h4>
                   <p class="text-xs text-on-surface-variant">{{ $t('settings.about.contributorsDesc') }}</p>
                 </div>
               </div>
-              <div class="h-px bg-surface-variant/20 mx-4"></div>
+              <div class="h-px bg-border mx-4"></div>
 
-              <div @click="openDialog('Sponsors')" class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 transition-colors cursor-pointer">
+              <div @click="openDialog('Sponsors')" class="flex items-center gap-4 p-4 hover:bg-surface-variant transition-colors cursor-pointer">
                 <Heart class="w-6 h-6 text-on-surface-variant flex-shrink-0" />
                 <div class="flex-1">
                   <h4 class="text-sm font-medium text-on-surface">{{ $t('settings.about.sponsorsBtn') }}</h4>
                   <p class="text-xs text-on-surface-variant">{{ $t('settings.about.sponsorsDesc') }}</p>
                 </div>
               </div>
-              <div class="h-px bg-surface-variant/20 mx-4"></div>
+              <div class="h-px bg-border mx-4"></div>
 
-              <div class="flex items-center justify-between p-4 hover:bg-surface-variant/30 transition-colors cursor-default">
+              <div class="flex items-center justify-between p-4 hover:bg-surface-variant transition-colors cursor-default">
                 <div class="flex items-center gap-4">
                   <Info class="w-6 h-6 text-on-surface-variant flex-shrink-0" />
                   <div>
@@ -282,22 +345,22 @@
                     <p class="text-xs text-on-surface-variant">{{ appVersion }}</p>
                   </div>
                 </div>
-                <button @click="openDialog('Update')" class="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-full transition-colors">
+                <button @click="openDialog('Update')" class="px-3 py-1.5 text-xs font-medium text-on-primary bg-primary hover:opacity-90 rounded-full transition-opacity">
                   {{ $t('settings.about.updatesBtn') }}
                 </button>
               </div>
-              <div class="h-px bg-surface-variant/20 mx-4"></div>
+              <div class="h-px bg-border mx-4"></div>
 
-              <div @click="openDialog('Licenses')" class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 transition-colors cursor-pointer">
+              <div @click="openDialog('Licenses')" class="flex items-center gap-4 p-4 hover:bg-surface-variant transition-colors cursor-pointer">
                 <FileText class="w-6 h-6 text-on-surface-variant flex-shrink-0" />
                 <div class="flex-1">
                   <h4 class="text-sm font-medium text-on-surface">{{ $t('settings.about.licensesBtn') }}</h4>
                   <p class="text-xs text-on-surface-variant">{{ $t('settings.about.licensesDesc') }}</p>
                 </div>
               </div>
-              <div class="h-px bg-surface-variant/20 mx-4"></div>
+              <div class="h-px bg-border mx-4"></div>
 
-              <div @click="exportLog" class="flex items-center gap-4 p-4 hover:bg-surface-variant/30 transition-colors cursor-pointer">
+              <div @click="exportLog" class="flex items-center gap-4 p-4 hover:bg-surface-variant transition-colors cursor-pointer">
                 <Download class="w-6 h-6 text-on-surface-variant flex-shrink-0" />
                 <div class="flex-1">
                   <h4 class="text-sm font-medium text-on-surface">{{ $t('settings.about.logsBtn') }}</h4>
@@ -328,6 +391,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, reactive, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useColorMode, useStorage } from '@vueuse/core';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import {
@@ -343,10 +407,10 @@ import {
   Users,
   Heart,
   FileText,
-  ChevronLeft,
   ChevronRight,
   ArrowRight,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Palette
 } from 'lucide-vue-next';
 import ContributorsDialog from './ContributorsDialog.vue';
 import SponsorsDialog from './SponsorsDialog.vue';
@@ -363,8 +427,21 @@ const emit = defineEmits(['close', 'updateDevice']);
 
 const { t, locale } = useI18n();
 
+const colorMode = useColorMode({
+  emitAuto: true,
+  modes: {
+    dark: 'dark',
+    light: 'light',
+  },
+  attribute: 'class',
+});
+
+const themeColor = useStorage('micyou_theme_color', 'theme-blue');
+const uiStyle = useStorage('micyou_ui_style', 'style-glass');
+
 const sections = computed(() => [
   { id: 'general', name: t('settings.categories.general'), icon: SettingsIcon },
+  { id: 'appearance', name: t('settings.categories.appearance'), icon: Palette },
   { id: 'audio', name: t('settings.categories.audio'), icon: Mic },
   { id: 'equalizer', name: t('settings.equalizer.title'), icon: SlidersHorizontal },
   { id: 'plugins', name: t('settings.categories.plugins'), icon: Puzzle },
@@ -459,23 +536,23 @@ const drawSpectrum = () => {
   const barWidth = width / barCount;
   const effectiveBarWidth = barWidth - gap;
 
+  const style = getComputedStyle(document.documentElement);
+  const primaryColor = `hsl(${style.getPropertyValue('--primary').trim()})`;
+  const variantColor = `hsl(${style.getPropertyValue('--surface-variant').trim()})`;
+
   for (let i = 0; i < barCount; i++) {
     const rawH = (raw[i] || 0) * height;
     const procH = (proc[i] || 0) * height;
 
     if (rawH > 0.5) {
-      ctx.fillStyle = 'rgba(150, 150, 150, 0.25)';
+      ctx.fillStyle = variantColor;
       ctx.beginPath();
       ctx.roundRect(i * barWidth + gap/2, height - rawH, effectiveBarWidth, rawH, 2);
       ctx.fill();
     }
 
     if (procH > 0.5) {
-      const gradient = ctx.createLinearGradient(0, height - procH, 0, height);
-      gradient.addColorStop(0, 'rgba(74, 103, 45, 0.7)');
-      gradient.addColorStop(1, 'rgba(74, 103, 45, 1)');
-      
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = primaryColor;
       ctx.beginPath();
       ctx.roundRect(i * barWidth + gap/2, height - procH, effectiveBarWidth, procH, 2);
       ctx.fill();

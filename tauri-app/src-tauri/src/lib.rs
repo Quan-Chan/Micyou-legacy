@@ -157,6 +157,9 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
         };
         let mut jb = jitter_buffer::JitterBuffer::new(12);
         let mut frame_counter = 0;
+        // Input resampler: converts from input sample rate to 48kHz for DSP processing
+        let mut input_resampler: Option<audio_engine::RubatoResampler> = None;
+        let mut current_input_sample_rate: u32 = 0;
 
         while let Some(packet) = audio_rx.blocking_recv() {
             jb.push(packet);
@@ -167,7 +170,7 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                         2 => { // PCM 16-bit
                             for chunk in audio_data.buffer.chunks_exact(2) {
                                 let sample_i16 = i16::from_le_bytes([chunk[0], chunk[1]]);
-                                pcm_f32.push(sample_i16 as f32 / i16::MAX as f32);
+                                pcm_f32.push(sample_i16 as f32 / 32768.0);
                             }
                         }
                         3 => { // PCM 8-bit
@@ -182,13 +185,40 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                                 pcm_f32.push(sample_f32);
                             }
                         }
+                        6 => { // PCM 24-bit
+                            for chunk in audio_data.buffer.chunks_exact(3) {
+                                let sample24 = (chunk[0] as i32) | ((chunk[1] as i32) << 8) | ((chunk[2] as i32) << 16);
+                                // 24-bit signed to f32
+                                let sample_f32 = (sample24 as f32) / 8388608.0;
+                                pcm_f32.push(sample_f32);
+                            }
+                        }
                         _ => {
-                            // Ignore other formats
+                            eprintln!("Unsupported audio format: {}", audio_data.audio_format);
                         }
                     }
 
                     if !pcm_f32.is_empty() {
                         let channels = audio_data.channel_count as usize;
+                        let sample_rate = audio_data.sample_rate as u32;
+
+                        // Resample input to 48kHz if needed (DSP assumes 48kHz)
+                        if sample_rate > 0 && sample_rate != 48000 {
+                            // Recreate resampler if sample rate changed
+                            if current_input_sample_rate != sample_rate {
+                                input_resampler = Some(audio_engine::RubatoResampler::new(
+                                    sample_rate, 48000, channels.max(1)
+                                ));
+                                current_input_sample_rate = sample_rate;
+                            }
+                            if let Some(ref mut resampler) = input_resampler {
+                                pcm_f32 = resampler.resample(&pcm_f32, channels.max(1));
+                            }
+                        } else {
+                            input_resampler = None;
+                            current_input_sample_rate = 48000;
+                        }
+
                         let queued_samples = audio_manager.queued_samples();
                         let queued_ms = if channels > 0 {
                             (queued_samples as f64 / channels as f64) / 48.0
@@ -199,7 +229,7 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                         let (_raw_rms, processed_rms) = dsp_processor.process(&mut pcm_f32, channels.max(1), queued_ms);
 
                         audio_manager.push_audio_data(&pcm_f32, channels.max(1));
-                        
+
                         frame_counter += 1;
                         if frame_counter % 3 == 0 {
                             let level = (processed_rms * 500.0).min(100.0) as u32;

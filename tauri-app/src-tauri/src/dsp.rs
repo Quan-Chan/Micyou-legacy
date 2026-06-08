@@ -514,9 +514,19 @@ impl ResamplerEffect {
             let frac = (pos - base as f64) as f32;
 
             for c in 0..channels {
-                let s0 = get_sample(base, c);
-                let s1 = get_sample(base + 1, c);
-                let v = s0 + (s1 - s0) * frac;
+                // Cubic Hermite interpolation for better quality
+                let s0 = if base > 0 { get_sample(base - 1, c) } else { get_sample(0, c) };
+                let s1 = get_sample(base, c);
+                let s2 = get_sample(base + 1, c);
+                let s3 = if base + 2 < effective_frames { get_sample(base + 2, c) } else { s2 };
+
+                // Catmull-Rom spline coefficients
+                let a = -0.5 * s0 + 1.5 * s1 - 1.5 * s2 + 0.5 * s3;
+                let b = s0 - 2.5 * s1 + 2.0 * s2 - 0.5 * s3;
+                let c_coeff = -0.5 * s0 + 0.5 * s2;
+                let d = s1;
+
+                let v = a * frac * frac * frac + b * frac * frac + c_coeff * frac + d;
                 output.push(v);
             }
 
@@ -539,12 +549,16 @@ impl ResamplerEffect {
 /// The main DSP processor. Operates on f32 PCM samples at 48kHz.
 pub struct DspProcessor {
     settings: Arc<RwLock<AudioDspSettings>>,
-    // RNNoise state (expects 480-sample frames at 48kHz)
-    denoiser: Box<DenoiseState<'static>>,
-    ns_buffer: Vec<f32>,
-    // Ulunas ONNX processor
-    ulunas: Option<UlunasProcessor>,
-    ulunas_buffer: Vec<f32>,
+    // RNNoise states - separate per channel to avoid RNN state cross-contamination
+    denoiser_left: Box<DenoiseState<'static>>,
+    denoiser_right: Box<DenoiseState<'static>>,
+    ns_buffer_left: Vec<f32>,
+    ns_buffer_right: Vec<f32>,
+    // Ulunas ONNX processor - separate per channel
+    ulunas_left: Option<UlunasProcessor>,
+    ulunas_right: Option<UlunasProcessor>,
+    ulunas_buffer_left: Vec<f32>,
+    ulunas_buffer_right: Vec<f32>,
     ulunas_model_path: Option<PathBuf>,
     // Speexdsp-style NS
     speex_ns: SpeexStyleNS,
@@ -552,6 +566,10 @@ pub struct DspProcessor {
     equalizer: EqualizerEffect,
     // Adaptive Resampler
     resampler: ResamplerEffect,
+    // Dereverb state
+    dereverb_buffer_left: Vec<f32>,
+    dereverb_buffer_right: Vec<f32>,
+    dereverb_index: usize,
     // AGC envelope follower
     agc_envelope: f32,
     // VAD fade state (0.0 = muted, 1.0 = full)
@@ -559,6 +577,8 @@ pub struct DspProcessor {
     // Spectrum snapshots
     raw_spectrum: Vec<f32>,
     processed_spectrum: Vec<f32>,
+    // Frame accumulation buffer (align to 480-sample frames for noise reduction)
+    accum_buffer: Vec<f32>,
 }
 
 const RNNOISE_FRAME_SIZE: usize = 480;
@@ -568,23 +588,33 @@ impl DspProcessor {
         let ulunas_model_path = model_dir.map(|d| d.join("ulunas.onnx"));
         Self {
             settings,
-            denoiser: DenoiseState::new(),
-            ns_buffer: Vec::with_capacity(RNNOISE_FRAME_SIZE * 2),
-            ulunas: None,
-            ulunas_buffer: Vec::with_capacity(RNNOISE_FRAME_SIZE * 2),
+            denoiser_left: DenoiseState::new(),
+            denoiser_right: DenoiseState::new(),
+            ns_buffer_left: Vec::with_capacity(RNNOISE_FRAME_SIZE * 2),
+            ns_buffer_right: Vec::with_capacity(RNNOISE_FRAME_SIZE * 2),
+            ulunas_left: None,
+            ulunas_right: None,
+            ulunas_buffer_left: Vec::with_capacity(RNNOISE_FRAME_SIZE * 2),
+            ulunas_buffer_right: Vec::with_capacity(RNNOISE_FRAME_SIZE * 2),
             ulunas_model_path,
             speex_ns: SpeexStyleNS::new(),
             equalizer: EqualizerEffect::new(),
             resampler: ResamplerEffect::new(),
+            dereverb_buffer_left: vec![0.0; 480],
+            dereverb_buffer_right: vec![0.0; 480],
+            dereverb_index: 0,
             agc_envelope: 0.0,
             vad_fade: 1.0,
             raw_spectrum: vec![0.0; 64],
             processed_spectrum: vec![0.0; 64],
+            accum_buffer: Vec::new(),
         }
     }
 
     /// Process a chunk of f32 PCM audio in-place.
     /// Returns (raw_rms, processed_rms) for level metering.
+    /// Internally accumulates to 480-sample aligned frames before noise reduction,
+    /// matching the KMP AudioProcessorPipeline behavior.
     pub fn process(&mut self, data: &mut Vec<f32>, channels: usize, queued_ms: f64) -> (f32, f32) {
         if data.is_empty() {
             return (0.0, 0.0);
@@ -593,8 +623,27 @@ impl DspProcessor {
         let raw_rms = compute_rms(data);
         self.compute_spectrum(data, true);
 
+        // Frame accumulation: align to 480*channels samples before processing,
+        // matching KMP's AudioProcessorPipeline behavior.
+        // Noise reduction (RNNoise/Ulunas) requires exactly 480-sample frames.
+        // Processing variable-size chunks through AGC/EQ causes artifacts.
+        self.accum_buffer.extend_from_slice(data);
+        let samples_per_frame = RNNOISE_FRAME_SIZE * channels.max(1);
+        let frame_count = self.accum_buffer.len() / samples_per_frame;
+
+        if frame_count == 0 {
+            // Not enough data for even one frame, output silence
+            data.iter_mut().for_each(|s| *s = 0.0);
+            return (raw_rms, 0.0);
+        }
+
+        let process_count = frame_count * samples_per_frame;
+        let mut to_process: Vec<f32> = self.accum_buffer[..process_count].to_vec();
+        // Keep remaining samples for next call
+        self.accum_buffer = self.accum_buffer[process_count..].to_vec();
+
         let settings = self.settings.read().unwrap().clone();
-        
+
         // Update Equalizer
         self.equalizer.update_filters(&settings.equalizer);
 
@@ -604,28 +653,28 @@ impl DspProcessor {
                 "NoiseReduction" => {
                     if settings.ns_enabled {
                         match settings.ns_type.as_str() {
-                            "RNNoise" => self.apply_rnnoise(data, settings.ns_intensity),
-                            "Ulunas" => self.apply_ulunas(data, settings.ns_intensity),
-                            "Speexdsp" => self.apply_speex(data, settings.ns_intensity),
-                            "Lightweight" => self.apply_lightweight(data, settings.ns_intensity),
+                            "RNNoise" => self.apply_rnnoise(&mut to_process, channels.max(1), settings.ns_intensity),
+                            "Ulunas" => self.apply_ulunas(&mut to_process, channels.max(1), settings.ns_intensity),
+                            "Speexdsp" => self.apply_speex(&mut to_process, channels.max(1), settings.ns_intensity),
+                            "Lightweight" => self.apply_lightweight(&mut to_process, settings.ns_intensity),
                             _ => {}
                         }
                     }
                 }
                 "Dereverb" => {
                     if settings.dereverb_enabled {
-                        self.apply_dereverb(data, settings.dereverb_level);
+                        self.apply_dereverb(&mut to_process, channels.max(1), settings.dereverb_level);
                     }
                 }
                 "Equalizer" => {
                     if settings.equalizer.enabled {
-                        self.equalizer.process(data, channels);
+                        self.equalizer.process(&mut to_process, channels);
                     }
                 }
                 "Amplifier" => {
                     if settings.gain.abs() > 0.01 {
                         let gain_linear = 10.0_f32.powf(settings.gain / 20.0);
-                        for sample in data.iter_mut() {
+                        for sample in to_process.iter_mut() {
                             *sample *= gain_linear;
                         }
                     }
@@ -634,23 +683,22 @@ impl DspProcessor {
                     if settings.agc_enabled {
                         let attack_rate = settings.agc_attack / 1000.0;
                         let decay_rate = settings.agc_decay / 10000.0;
-                        self.apply_agc(data, settings.agc_target, attack_rate, decay_rate);
+                        self.apply_agc(&mut to_process, settings.agc_target, attack_rate, decay_rate);
                     }
                 }
                 "VAD" => {
                     if settings.vad_enabled {
-                        self.apply_vad(data, settings.vad_threshold);
+                        self.apply_vad(&mut to_process, settings.vad_threshold);
                     }
                 }
                 _ => {}
             }
         }
-        
+
         // Resampler
         self.resampler.update_playback_ratio(queued_ms);
-        let resampled = self.resampler.process(data, channels);
-        data.clear();
-        data.extend_from_slice(&resampled);
+        let resampled = self.resampler.process(&to_process, channels);
+        *data = resampled;
 
         // Clamp
         for sample in data.iter_mut() {
@@ -689,19 +737,53 @@ impl DspProcessor {
 
     // ── RNNoise (nnnoiseless) ───────────────────────────────────────────────
 
-    fn apply_rnnoise(&mut self, data: &mut Vec<f32>, intensity: f32) {
+    fn apply_rnnoise(&mut self, data: &mut Vec<f32>, channels: usize, intensity: f32) {
+        if data.is_empty() || channels == 0 {
+            return;
+        }
+
+        if channels >= 2 {
+            let frames = data.len() / 2;
+            let mut left: Vec<f32> = Vec::with_capacity(frames);
+            let mut right: Vec<f32> = Vec::with_capacity(frames);
+            for i in 0..frames {
+                left.push(data[i * 2]);
+                right.push(data[i * 2 + 1]);
+            }
+
+            // Process each channel with its own denoiser (no RNN state cross-contamination)
+            Self::process_rnnoise_single_channel(&mut left, &mut self.ns_buffer_left, &mut self.denoiser_left, intensity);
+            Self::process_rnnoise_single_channel(&mut right, &mut self.ns_buffer_right, &mut self.denoiser_right, intensity);
+
+            data.clear();
+            for i in 0..frames {
+                data.push(left[i]);
+                data.push(right[i]);
+            }
+        } else {
+            Self::process_rnnoise_single_channel(data, &mut self.ns_buffer_left, &mut self.denoiser_left, intensity);
+        }
+    }
+
+    fn process_rnnoise_single_channel(
+        data: &mut Vec<f32>,
+        ns_buffer: &mut Vec<f32>,
+        denoiser: &mut DenoiseState<'static>,
+        intensity: f32,
+    ) {
         let mix = (intensity / 100.0).clamp(0.0, 1.0);
-        self.ns_buffer.extend_from_slice(data);
+        let input_len = data.len();
+        ns_buffer.extend_from_slice(data);
 
-        let mut output = Vec::with_capacity(data.len());
+        let mut output = Vec::with_capacity(input_len);
 
-        while self.ns_buffer.len() >= RNNOISE_FRAME_SIZE {
-            let frame: Vec<f32> = self.ns_buffer.drain(..RNNOISE_FRAME_SIZE).collect();
+        while ns_buffer.len() >= RNNOISE_FRAME_SIZE {
+            let frame: Vec<f32> = ns_buffer.drain(..RNNOISE_FRAME_SIZE).collect();
 
             let input_frame: Vec<f32> = frame.iter().map(|s| s * 32767.0).collect();
             let mut output_frame = vec![0.0f32; RNNOISE_FRAME_SIZE];
 
-            let _vad_prob = self.denoiser.process_frame(&mut output_frame, &input_frame);
+            let _vad_prob = denoiser.process_frame(&mut output_frame, &input_frame);
 
             for i in 0..RNNOISE_FRAME_SIZE {
                 let clean = output_frame[i] / 32767.0;
@@ -710,55 +792,101 @@ impl DspProcessor {
             }
         }
 
-        if !output.is_empty() {
-            for (i, sample) in output.iter().enumerate() {
-                if i < data.len() {
-                    data[i] = *sample;
-                }
-            }
+        for sample in ns_buffer.drain(..) {
+            output.push(sample);
         }
+
+        output.truncate(input_len);
+        while output.len() < input_len {
+            output.push(0.0);
+        }
+
+        *data = output;
     }
 
     // ── Ulunas (ONNX) ──────────────────────────────────────────────────────
 
-    fn apply_ulunas(&mut self, data: &mut Vec<f32>, intensity: f32) {
-        // Lazy init
-        if self.ulunas.is_none() {
+    fn apply_ulunas(&mut self, data: &mut Vec<f32>, channels: usize, intensity: f32) {
+        // Lazy init for both channels
+        if self.ulunas_left.is_none() {
             if let Some(path) = &self.ulunas_model_path {
                 if path.exists() {
                     match UlunasProcessor::new(path.to_str().unwrap_or("")) {
                         Ok(proc) => {
-                            eprintln!("[DSP] Ulunas ONNX model loaded: {:?}", path);
-                            self.ulunas = Some(proc);
+                            eprintln!("[DSP] Ulunas ONNX model loaded (L): {:?}", path);
+                            self.ulunas_left = Some(proc);
                         }
                         Err(e) => {
                             eprintln!("[DSP] Failed to load Ulunas model: {}", e);
-                            // Fallback to RNNoise
-                            self.apply_rnnoise(data, intensity);
+                            self.apply_rnnoise(data, channels, intensity);
                             return;
                         }
                     }
                 } else {
                     eprintln!("[DSP] Ulunas model not found at {:?}, falling back to RNNoise", path);
-                    self.apply_rnnoise(data, intensity);
+                    self.apply_rnnoise(data, channels, intensity);
                     return;
                 }
             } else {
-                self.apply_rnnoise(data, intensity);
+                self.apply_rnnoise(data, channels, intensity);
                 return;
             }
         }
+        if channels >= 2 && self.ulunas_right.is_none() {
+            if let Some(path) = &self.ulunas_model_path {
+                if path.exists() {
+                    match UlunasProcessor::new(path.to_str().unwrap_or("")) {
+                        Ok(proc) => {
+                            eprintln!("[DSP] Ulunas ONNX model loaded (R): {:?}", path);
+                            self.ulunas_right = Some(proc);
+                        }
+                        Err(e) => {
+                            eprintln!("[DSP] Failed to load Ulunas model for R channel: {}", e);
+                        }
+                    }
+                }
+            }
+        }
 
+        if channels >= 2 {
+            let frames = data.len() / 2;
+            let mut left: Vec<f32> = Vec::with_capacity(frames);
+            let mut right: Vec<f32> = Vec::with_capacity(frames);
+            for i in 0..frames {
+                left.push(data[i * 2]);
+                right.push(data[i * 2 + 1]);
+            }
+
+            Self::process_ulunas_single_channel(&mut left, &mut self.ulunas_buffer_left, &mut self.ulunas_left, intensity);
+            Self::process_ulunas_single_channel(&mut right, &mut self.ulunas_buffer_right, &mut self.ulunas_right, intensity);
+
+            data.clear();
+            for i in 0..frames {
+                data.push(left[i]);
+                data.push(right[i]);
+            }
+        } else {
+            Self::process_ulunas_single_channel(data, &mut self.ulunas_buffer_left, &mut self.ulunas_left, intensity);
+        }
+    }
+
+    fn process_ulunas_single_channel(
+        data: &mut Vec<f32>,
+        ulunas_buffer: &mut Vec<f32>,
+        ulunas: &mut Option<UlunasProcessor>,
+        intensity: f32,
+    ) {
         let mix = (intensity / 100.0).clamp(0.0, 1.0);
-        self.ulunas_buffer.extend_from_slice(data);
+        let input_len = data.len();
+        ulunas_buffer.extend_from_slice(data);
 
-        let mut output = Vec::with_capacity(data.len());
+        let mut output = Vec::with_capacity(input_len);
 
-        while self.ulunas_buffer.len() >= RNNOISE_FRAME_SIZE {
-            let frame: Vec<f32> = self.ulunas_buffer.drain(..RNNOISE_FRAME_SIZE).collect();
+        while ulunas_buffer.len() >= RNNOISE_FRAME_SIZE {
+            let frame: Vec<f32> = ulunas_buffer.drain(..RNNOISE_FRAME_SIZE).collect();
 
-            if let Some(ulunas) = &mut self.ulunas {
-                let processed = ulunas.process(&frame);
+            if let Some(proc) = ulunas {
+                let processed = proc.process(&frame);
                 for i in 0..RNNOISE_FRAME_SIZE {
                     let clean = if i < processed.len() { processed[i] } else { frame[i] };
                     output.push(frame[i] * (1.0 - mix) + clean * mix);
@@ -768,30 +896,94 @@ impl DspProcessor {
             }
         }
 
-        if !output.is_empty() {
-            for (i, sample) in output.iter().enumerate() {
-                if i < data.len() {
-                    data[i] = *sample;
-                }
-            }
+        for sample in ulunas_buffer.drain(..) {
+            output.push(sample);
         }
+
+        output.truncate(input_len);
+        while output.len() < input_len {
+            output.push(0.0);
+        }
+
+        *data = output;
     }
 
     // ── Speexdsp (spectral subtraction) ─────────────────────────────────────
 
-    fn apply_speex(&mut self, data: &mut Vec<f32>, intensity: f32) {
-        self.speex_ns.process(data, intensity);
+    fn apply_speex(&mut self, data: &mut Vec<f32>, channels: usize, intensity: f32) {
+        let input_len = data.len();
+
+        // Stereo: separate channels, process each independently, re-interleave
+        if channels >= 2 && input_len >= 2 {
+            let frames = input_len / 2;
+            let mut left: Vec<f32> = Vec::with_capacity(frames);
+            let mut right: Vec<f32> = Vec::with_capacity(frames);
+            for i in 0..frames {
+                left.push(data[i * 2]);
+                right.push(data[i * 2 + 1]);
+            }
+
+            self.speex_ns.process(&mut left, intensity);
+            self.speex_ns.process(&mut right, intensity);
+
+            // Re-interleave
+            data.clear();
+            for i in 0..frames {
+                data.push(left[i]);
+                data.push(right[i]);
+            }
+        } else {
+            // Mono
+            self.speex_ns.process(data, intensity);
+        }
     }
 
-    // ── Dereverb ────────────────────────────────────────────────────────────
+    // ── Dereverb (delay-line comb filter, matching KMP DereverbEffect) ─────
 
-    fn apply_dereverb(&self, data: &mut Vec<f32>, level: f32) {
-        let alpha = 0.02 + (level / 100.0) * 0.15;
-        let mut prev = 0.0_f32;
-        for sample in data.iter_mut() {
-            let filtered = *sample - prev + (1.0 - alpha) * *sample;
-            prev = *sample;
-            *sample = filtered * 0.5;
+    fn apply_dereverb(&mut self, data: &mut Vec<f32>, channels: usize, level: f32) {
+        let mix = (level / 100.0).clamp(0.0, 1.0);
+        if mix <= 0.0 || channels == 0 {
+            return;
+        }
+
+        let delay = 480usize;
+
+        // Ensure buffers are sized
+        if self.dereverb_buffer_left.len() != delay {
+            self.dereverb_buffer_left = vec![0.0; delay];
+        }
+        if self.dereverb_buffer_right.len() != delay {
+            self.dereverb_buffer_right = vec![0.0; delay];
+        }
+
+        if channels == 1 {
+            let buf = &mut self.dereverb_buffer_left;
+            for sample in data.iter_mut() {
+                let delayed = buf[self.dereverb_index];
+                buf[self.dereverb_index] = *sample;
+                *sample = (*sample - delayed * mix).clamp(-1.0, 1.0);
+                self.dereverb_index += 1;
+                if self.dereverb_index >= delay {
+                    self.dereverb_index = 0;
+                }
+            }
+        } else {
+            let buf_l = &mut self.dereverb_buffer_left;
+            let buf_r = &mut self.dereverb_buffer_right;
+            let mut i = 0;
+            while i + 1 < data.len() {
+                let delayed_l = buf_l[self.dereverb_index];
+                let delayed_r = buf_r[self.dereverb_index];
+                buf_l[self.dereverb_index] = data[i];
+                buf_r[self.dereverb_index] = data[i + 1];
+                data[i] = (data[i] - delayed_l * mix).clamp(-1.0, 1.0);
+                data[i + 1] = (data[i + 1] - delayed_r * mix).clamp(-1.0, 1.0);
+                self.dereverb_index += 1;
+                if self.dereverb_index >= delay {
+                    self.dereverb_index = 0;
+                }
+                i += 2;
+            }
         }
     }
 

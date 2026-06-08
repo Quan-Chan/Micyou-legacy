@@ -1,75 +1,76 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{SampleFormat, StreamConfig, OutputCallbackInfo};
 use ringbuf::{HeapRb, Producer};
+use rubato::{Resampler, Async, FixedAsync, PolynomialDegree};
+use rubato::audioadapter_buffers::owned::InterleavedOwned;
+use rubato::audioadapter::{Adapter, AdapterMut};
 use std::sync::Arc;
 
-struct SimpleResampler {
-    ratio: f32,
-    fractional_pos: f32,
-    history: Vec<Vec<f32>>,
+pub struct RubatoResampler {
+    resampler: Async<f32>,
+    input_buffer: InterleavedOwned<f32>,
+    chunk_size: usize,
 }
 
-impl SimpleResampler {
-    fn new(in_rate: u32, out_rate: u32, channels: usize) -> Self {
+impl RubatoResampler {
+    pub fn new(in_rate: u32, out_rate: u32, channels: usize) -> Self {
+        let chunk_size = 480; // Match typical audio frame size
+        // Use polynomial interpolation - much faster than sinc, good enough quality
+        let resampler = Async::<f32>::new_poly(
+            out_rate as f64 / in_rate as f64,
+            2.0,
+            PolynomialDegree::Cubic,
+            chunk_size,
+            channels,
+            FixedAsync::Input,
+        ).unwrap();
+
+        let input_buffer = InterleavedOwned::<f32>::new(0.0f32, channels, chunk_size);
+
         Self {
-            ratio: in_rate as f32 / out_rate as f32,
-            fractional_pos: 0.0,
-            history: vec![vec![0.0; channels]; 3],
+            resampler,
+            input_buffer,
+            chunk_size,
         }
     }
 
-    fn resample(&mut self, input: &[f32], channels: usize) -> Vec<f32> {
-        let mut output = Vec::new();
+    pub fn resample(&mut self, input: &[f32], channels: usize) -> Vec<f32> {
         let in_frames = input.len() / channels;
-        
-        let get_sample = |hist: &Vec<Vec<f32>>, inp: &[f32], index: isize, c: usize| -> f32 {
-            if index < 0 {
-                let h_idx = index + 3;
-                if h_idx < 0 {
-                    0.0
-                } else {
-                    hist[h_idx as usize][c]
-                }
-            } else if index < in_frames as isize {
-                inp[(index as usize) * channels + c]
-            } else {
-                inp[(in_frames - 1) * channels + c]
-            }
-        };
 
-        while self.fractional_pos < in_frames as f32 {
-            let index = self.fractional_pos as isize;
-            let t = self.fractional_pos - index as f32;
-            
-            for c in 0..channels {
-                let p0 = get_sample(&self.history, input, index - 1, c);
-                let p1 = get_sample(&self.history, input, index, c);
-                let p2 = get_sample(&self.history, input, index + 1, c);
-                let p3 = get_sample(&self.history, input, index + 2, c);
-                
-                let a0 = -0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3;
-                let a1 = p0 - 2.5 * p1 + 2.0 * p2 - 0.5 * p3;
-                let a2 = -0.5 * p0 + 0.5 * p2;
-                let a3 = p1;
-                
-                let out_sample = a0 * t * t * t + a1 * t * t + a2 * t + a3;
-                output.push(out_sample);
-            }
-            
-            self.fractional_pos += self.ratio;
+        // For small inputs or mismatched sizes, fall back to simple passthrough
+        // to avoid the overhead of the resampler
+        if in_frames <= 2 || in_frames > self.chunk_size {
+            return input.to_vec();
         }
-        
-        self.fractional_pos -= in_frames as f32;
-        if in_frames > 0 {
-            for i in 0..3 {
-                let idx = in_frames as isize - 3 + i as isize;
-                for c in 0..channels {
-                    self.history[i][c] = get_sample(&self.history, input, idx, c);
+
+        // Fill the pre-allocated input buffer
+        for (i, &sample) in input.iter().enumerate() {
+            let frame = i / channels;
+            let ch = i % channels;
+            if frame < self.chunk_size {
+                self.input_buffer.write_sample(ch, frame, &sample);
+            }
+        }
+
+        // Process using the convenience method
+        match self.resampler.process(&self.input_buffer, 0, None) {
+            Ok(output_buffer) => {
+                let out_frames = output_buffer.frames();
+                let mut output = Vec::with_capacity(out_frames * channels);
+                for frame in 0..out_frames {
+                    for ch in 0..channels {
+                        if let Some(sample) = output_buffer.read_sample(ch, frame) {
+                            output.push(sample);
+                        }
+                    }
                 }
+                output
+            }
+            Err(e) => {
+                eprintln!("Resample error: {}", e);
+                input.to_vec()
             }
         }
-        
-        output
     }
 }
 
@@ -94,7 +95,7 @@ fn map_channels(input: &[f32], in_channels: usize, out_channels: usize) -> Vec<f
 pub struct AudioOutputManager {
     stream: Option<cpal::Stream>,
     producer: Option<Producer<f32, Arc<HeapRb<f32>>>>,
-    resampler: Option<SimpleResampler>,
+    resampler: Option<RubatoResampler>,
     device_sample_rate: u32,
     device_channels: usize,
 }
@@ -159,13 +160,14 @@ impl AudioOutputManager {
         self.device_channels = config.channels() as usize;
 
         if self.device_sample_rate != 48000 {
-            self.resampler = Some(SimpleResampler::new(48000, self.device_sample_rate, self.device_channels));
+            self.resampler = Some(RubatoResampler::new(48000, self.device_sample_rate, self.device_channels));
         } else {
             self.resampler = None;
         }
 
-        // Initialize a ring buffer for 1 second of audio
-        let ring_buffer = HeapRb::<f32>::new(self.device_sample_rate as usize * self.device_channels);
+        // Initialize a ring buffer for ~200ms of audio (reduced from 1s for lower latency)
+        let buffer_size = (self.device_sample_rate as usize * self.device_channels) / 5;
+        let ring_buffer = HeapRb::<f32>::new(buffer_size.max(4096));
         let (producer, mut consumer) = ring_buffer.split();
 
         self.producer = Some(producer);
@@ -189,7 +191,8 @@ impl AudioOutputManager {
                 move |data: &mut [i16], _: &OutputCallbackInfo| {
                     for sample in data.iter_mut() {
                         let f_sample = consumer.pop().unwrap_or(0.0);
-                        *sample = (f_sample * i16::MAX as f32) as i16;
+                        // Use 32768.0 for symmetric range (-1.0 to 1.0 maps to -32768 to 32767)
+                        *sample = (f_sample * 32768.0).clamp(-32768.0, 32767.0) as i16;
                     }
                 },
                 err_fn,

@@ -108,7 +108,7 @@ const props = defineProps<{
 
 const statusColor = computed(() => {
   if (props.serverState === 'streaming') return 'bg-tertiary shadow-[0_0_8px_rgba(var(--color-tertiary),0.6)]'
-  if (props.serverState === 'connecting') return 'bg-secondary animate-pulse'
+  if (props.serverState === 'connecting' || props.serverState === 'starting') return 'bg-secondary animate-pulse'
   return 'bg-outline-variant'
 })
 

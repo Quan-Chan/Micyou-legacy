@@ -47,6 +47,7 @@ const statusColor = computed(() => {
   switch (props.serverState) {
     case 'streaming': return 'bg-primary';
     case 'connecting': return 'bg-tertiary animate-pulse';
+    case 'starting': return 'bg-tertiary animate-pulse';
     default: return 'bg-on-surface-variant';
   }
 });
@@ -55,6 +56,7 @@ const buttonColor = computed(() => {
   switch (props.serverState) {
     case 'streaming': return 'bg-error hover:bg-error/90';
     case 'connecting': return 'bg-tertiary hover:bg-tertiary/90';
+    case 'starting': return 'bg-tertiary hover:bg-tertiary/90';
     default: return 'bg-primary hover:bg-primary/90';
   }
 });
@@ -232,10 +234,10 @@ defineExpose({ closePopup });
       class="h-8 px-3 rounded-lg text-xs font-bold text-on-primary flex items-center gap-1.5 transition-colors flex-shrink-0"
       :class="buttonColor"
     >
-      <RefreshCw v-if="serverState === 'connecting'" class="w-3.5 h-3.5 animate-spin" />
+      <RefreshCw v-if="serverState === 'connecting' || serverState === 'starting'" class="w-3.5 h-3.5 animate-spin" />
       <Unlink v-else-if="serverState === 'streaming'" class="w-3.5 h-3.5" />
       <Link v-else class="w-3.5 h-3.5" />
-      <span>{{ serverState === 'streaming' ? $t('app.status.stateStreaming') : (serverState === 'connecting' ? $t('app.status.stateConnecting') : $t('app.start')) }}</span>
+      <span>{{ serverState === 'streaming' ? $t('app.status.stateStreaming') : (serverState === 'connecting' ? $t('app.status.stateConnecting') : (serverState === 'starting' ? $t('app.status.stateStarting') : $t('app.start'))) }}</span>
     </button>
 
     <!-- IP Display -->

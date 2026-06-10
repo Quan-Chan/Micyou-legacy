@@ -19,7 +19,7 @@ import { useTray } from './composables/useTray';
 import appIconSvg from './assets/app_icon.svg?raw';
 import anime from 'animejs';
 
-const serverState = ref<'idle' | 'connecting' | 'streaming'>('idle');
+const serverState = ref<'idle' | 'starting' | 'connecting' | 'streaming'>('idle');
 const connectionMode = useStorage<'wifi' | 'usb' | 'web'>('micyou_connectionMode', 'wifi');
 const serverPort = useStorage('micyou_serverPort', 8554);
 const audioLevel = ref(0);
@@ -68,7 +68,7 @@ const isHidden = ref(localStorage.getItem('micyou_start_minimized') === 'true');
 const showCloseConfirm = ref(false);
 
 function isStreaming(v: typeof serverState.value) {
-  return v === 'streaming' || v === 'connecting';
+  return v === 'streaming' || v === 'connecting' || v === 'starting';
 }
 
 const streamingRef = computed(() => isStreaming(serverState.value));
@@ -290,6 +290,7 @@ let unlistenDeviceDisconnected: UnlistenFn | null = null;
 let unlistenAudioMetrics: UnlistenFn | null = null;
 let unlistenUdpWarning: UnlistenFn | null = null;
 let unlistenMuteState: UnlistenFn | null = null;
+let unlistenServerStopped: UnlistenFn | null = null;
 
 onMounted(async () => {
 
@@ -334,6 +335,12 @@ onMounted(async () => {
   unlistenMuteState = await listen<boolean>('mute-state-changed', (event) => {
     isMuted.value = event.payload;
   });
+
+  unlistenServerStopped = await listen('server-stopped', () => {
+    serverState.value = 'idle';
+    audioLevel.value = 0;
+    isMuted.value = false;
+  });
 });
 
 onUnmounted(() => {
@@ -345,6 +352,7 @@ onUnmounted(() => {
   if (unlistenAudioMetrics) unlistenAudioMetrics();
   if (unlistenUdpWarning) unlistenUdpWarning();
   if (unlistenMuteState) unlistenMuteState();
+  if (unlistenServerStopped) unlistenServerStopped();
 });
 
 const toggleStreaming = async () => {
@@ -358,6 +366,7 @@ const toggleStreaming = async () => {
     }
   } else {
     try {
+      serverState.value = 'starting';
       const bindAddress = isAutoBind.value ? null : selectedIp.value;
       await invoke('start_server', {
         port: Number(serverPort.value),
@@ -371,6 +380,7 @@ const toggleStreaming = async () => {
       }
     } catch (e) {
       console.error(e);
+      serverState.value = 'idle';
     }
   }
   // Bounce animation on click
@@ -711,14 +721,14 @@ watchEffect(() => {
           <!-- Status Card -->
           <div class="haze-surface rounded-2xl p-4 flex-1 flex flex-col items-center justify-center text-center gap-3">
             <div class="w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-500" 
-                 :class="serverState === 'streaming' ? 'bg-primary/20 text-primary' : (serverState === 'connecting' ? 'bg-tertiary/20 text-tertiary' : 'bg-surface-variant/50 text-on-surface-variant')">
+                 :class="serverState === 'streaming' ? 'bg-primary/20 text-primary' : (serverState === 'connecting' || serverState === 'starting' ? 'bg-tertiary/20 text-tertiary' : 'bg-surface-variant/50 text-on-surface-variant')">
               <CheckCircle2 v-if="serverState === 'streaming'" class="w-6 h-6 animate-pulse" />
-              <RadioTower v-else class="w-6 h-6" :class="{ 'animate-spin-slow': serverState === 'connecting' }" />
+              <RadioTower v-else class="w-6 h-6" :class="{ 'animate-spin-slow': serverState === 'connecting' || serverState === 'starting' }" />
             </div>
             <div>
-              <h3 class="text-sm font-bold">{{ serverState === 'streaming' ? $t('app.status.streaming') : (serverState === 'connecting' ? $t('app.status.connecting') : $t('app.status.ready')) }}</h3>
+              <h3 class="text-sm font-bold">{{ serverState === 'streaming' ? $t('app.status.streaming') : (serverState === 'connecting' ? $t('app.status.connecting') : (serverState === 'starting' ? $t('app.status.starting') : $t('app.status.ready'))) }}</h3>
               <p class="text-xs text-on-surface-variant mt-1 max-w-[200px] mx-auto">
-                {{ serverState === 'streaming' ? $t('app.status.streamingDesc') : (serverState === 'connecting' ? $t('app.status.connectingDesc', { port: serverPort }) : $t('app.status.readyDesc')) }}
+                {{ serverState === 'streaming' ? $t('app.status.streamingDesc') : (serverState === 'connecting' ? $t('app.status.connectingDesc', { port: serverPort }) : (serverState === 'starting' ? $t('app.status.startingDesc') : $t('app.status.readyDesc'))) }}
               </p>
             </div>
           </div>
@@ -744,8 +754,8 @@ watchEffect(() => {
             <div v-else class="relative w-full h-full flex items-center justify-center">
               <!-- Central Button When Not Streaming -->
               <button ref="centralBtnRef" @click="toggleStreaming" @mouseenter="onCentralBtnHover" @mouseleave="onCentralBtnLeave" class="relative z-10 w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-95 border border-white/5 hover:shadow-lg hover:shadow-primary/30"
-                      :class="serverState === 'connecting' ? 'bg-tertiary shadow-tertiary/20 text-on-tertiary' : 'bg-primary shadow-primary/20 text-on-primary'">
-                <RefreshCw v-if="serverState === 'connecting'" class="w-7 h-7 animate-spin-slow" stroke-width="2.5" />
+                      :class="serverState === 'connecting' || serverState === 'starting' ? 'bg-tertiary shadow-tertiary/20 text-on-tertiary' : 'bg-primary shadow-primary/20 text-on-primary'">
+                <RefreshCw v-if="serverState === 'connecting' || serverState === 'starting'" class="w-7 h-7 animate-spin-slow" stroke-width="2.5" />
                 <Link v-else class="w-7 h-7" stroke-width="2.5" />
               </button>
             </div>
@@ -761,8 +771,8 @@ watchEffect(() => {
       <!-- Bottom Bar -->
       <div class="haze-surface rounded-2xl p-2 flex justify-between items-center flex-shrink-0">
         <div class="flex items-center px-3">
-          <div ref="statusDotRef" class="w-2 h-2 rounded-full mr-2" :class="serverState === 'streaming' ? 'bg-primary shadow-[0_0_8px_hsl(var(--primary))]' : (serverState === 'connecting' ? 'bg-tertiary animate-pulse shadow-[0_0_8px_hsl(var(--tertiary))]' : 'bg-on-surface-variant')"></div>
-          <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant transition-colors duration-300">{{ serverState === 'streaming' ? $t('app.status.stateStreaming') : (serverState === 'connecting' ? $t('app.status.stateConnecting') : $t('app.status.stateIdle')) }}</span>
+          <div ref="statusDotRef" class="w-2 h-2 rounded-full mr-2" :class="serverState === 'streaming' ? 'bg-primary shadow-[0_0_8px_hsl(var(--primary))]' : (serverState === 'connecting' || serverState === 'starting' ? 'bg-tertiary animate-pulse shadow-[0_0_8px_hsl(var(--tertiary))]' : 'bg-on-surface-variant')"></div>
+          <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant transition-colors duration-300">{{ serverState === 'streaming' ? $t('app.status.stateStreaming') : (serverState === 'connecting' ? $t('app.status.stateConnecting') : (serverState === 'starting' ? $t('app.status.stateStarting') : $t('app.status.stateIdle'))) }}</span>
         </div>
         
         <div class="flex items-center gap-2 pr-1">

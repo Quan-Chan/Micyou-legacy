@@ -351,7 +351,13 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
 }
 
 #[tauri::command]
-async fn stop_server(state: State<'_, ServerState>) -> Result<String, String> {
+async fn stop_server(app: AppHandle, state: State<'_, ServerState>) -> Result<String, String> {
+    // Notify mobile client by dropping the sender before canceling
+    {
+        let mut conn_tx_lock = state.connection_tx.lock().await;
+        *conn_tx_lock = None;
+    }
+
     let mut mdns_lock = state.mdns_manager.lock().await;
     if let Some(mdns) = mdns_lock.take() {
         mdns.stop_mdns();
@@ -360,8 +366,7 @@ async fn stop_server(state: State<'_, ServerState>) -> Result<String, String> {
     let mut token_lock = state.cancel_token.lock().await;
     if let Some(token) = token_lock.take() {
         token.cancel();
-        let mut conn_tx_lock = state.connection_tx.lock().await;
-        *conn_tx_lock = None;
+        let _ = app.emit("server-stopped", ());
         Ok("Server stopped".to_string())
     } else {
         Err("Server is not running".to_string())
@@ -411,7 +416,7 @@ fn hide_main_window(app: AppHandle) -> Result<(), String> {
 fn exit_app(app: AppHandle, state: State<'_, ServerState>) -> Result<(), String> {
     let rt = tauri::async_runtime::handle();
     rt.block_on(async {
-        let _ = stop_server(state).await;
+        let _ = stop_server(app.clone(), state).await;
     });
     // TODO: restore default audio once VirtualAudioDeviceManager is ported.
     log::info!(target: "tray", "exit_app: stopping application");

@@ -7,7 +7,7 @@ import { useStorage } from '@vueuse/core';
 import { sendNotification, isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
 
 // Icons
-import { Mic, Wifi, RadioTower, Globe, ChevronDown, CheckCircle2, Settings, Link, Unlink, RefreshCw, Scan, ActivitySquare as MonitoringIcon, X, Minus, VolumeX, Volume2 } from 'lucide-vue-next';
+import { Mic, Wifi, RadioTower, Globe, ChevronDown, CheckCircle2, Settings, Link, Unlink, RefreshCw, ActivitySquare as MonitoringIcon, X, Minus, VolumeX, Volume2, QrCode as QrCodeIcon } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import CustomBackground from './components/CustomBackground.vue';
 import SettingsDialog from './components/SettingsDialog.vue';
@@ -17,15 +17,21 @@ import UdpWarningDialog from './components/UdpWarningDialog.vue';
 import PocketLayout from './components/PocketLayout.vue';
 import CloseConfirmDialog from './components/CloseConfirmDialog.vue';
 import ConnectionErrorDialog from './components/ConnectionErrorDialog.vue';
+import QrCodeDialog from './components/QrCodeDialog.vue';
 import OnboardingWizard from './components/OnboardingWizard.vue';
 import { analyzeError, generateErrorDetails, type ConnectionErrorDetails } from './utils/connectionError';
 import { useTray } from './composables/useTray';
 import appIconSvg from './assets/app_icon.svg?raw';
 import anime from 'animejs';
+import QRCode from 'qrcode';
 
 const serverState = ref<'idle' | 'starting' | 'connecting' | 'streaming'>('idle');
 const connectionMode = useStorage<'wifi' | 'usb' | 'web'>('micyou_connectionMode', 'wifi');
 const serverPort = useStorage('micyou_serverPort', 8554);
+const webPort = useStorage('micyou_webPort', 8443);
+const webClientCount = ref(0);
+const webUrl = ref('');
+const qrDataUrl = ref('');
 const notificationsEnabled = useStorage<boolean>('micyou_notifications', true);
 const audioLevel = ref(0);
 const networkInfo = ref<{ ips: string[], port: number } | null>(null);
@@ -49,6 +55,7 @@ const isSettingsOpen = ref(false);
 const showMonitoringPanel = ref(false);
 const showUdpWarning = ref(false);
 const showErrorDialog = ref(false);
+const showQrDialog = ref(false);
 const errorDetails = ref<ConnectionErrorDetails | null>(null);
 const audioMetrics = ref<any>(null);
 const outputDevice = ref<string>(localStorage.getItem('micyou_output_device') || '');
@@ -66,6 +73,36 @@ const pocketMode = useStorage('micyou_pocket_mode', false);
 const pocketPopupOpen = ref(false);
 const pocketLayoutRef = ref<InstanceType<typeof PocketLayout> | null>(null);
 const { t } = useI18n();
+
+async function generateQrCode(url: string) {
+    try {
+        qrDataUrl.value = await QRCode.toDataURL(url, {
+            width: 200,
+            margin: 1,
+            color: { dark: '#000000', light: '#ffffff' }
+        });
+    } catch (e) {
+        console.error('QR generation failed:', e);
+        qrDataUrl.value = '';
+    }
+}
+
+const statusDescription = computed(() => {
+    if (serverState.value === 'streaming') {
+        if (connectionMode.value === 'web') {
+            return t('app.web.clientsConnected', { count: webClientCount.value });
+        }
+        return t('app.status.streamingDesc');
+    }
+    if (serverState.value === 'connecting') {
+        if (connectionMode.value === 'web') {
+            return t('app.status.connectingDesc', { port: webPort.value });
+        }
+        return t('app.status.connectingDesc', { port: serverPort.value });
+    }
+    if (serverState.value === 'starting') return t('app.status.startingDesc');
+    return t('app.status.readyDesc');
+});
 
 // Window Management
 const appWindow = getCurrentWindow();
@@ -307,6 +344,7 @@ let unlistenAudioMetrics: UnlistenFn | null = null;
 let unlistenUdpWarning: UnlistenFn | null = null;
 let unlistenMuteState: UnlistenFn | null = null;
 let unlistenServerStopped: UnlistenFn | null = null;
+let unlistenWebClients: UnlistenFn | null = null;
 
 onMounted(async () => {
 
@@ -364,6 +402,10 @@ onMounted(async () => {
     isMuted.value = false;
   });
 
+  unlistenWebClients = await listen<number>('web-client-count', (event) => {
+    webClientCount.value = event.payload;
+  });
+
   // Auto-stream: start connecting on app launch if enabled
   if (localStorage.getItem('micyou_auto_stream') === 'true') {
     toggleStreaming();
@@ -380,6 +422,7 @@ onUnmounted(() => {
   if (unlistenUdpWarning) unlistenUdpWarning();
   if (unlistenMuteState) unlistenMuteState();
   if (unlistenServerStopped) unlistenServerStopped();
+  if (unlistenWebClients) unlistenWebClients();
 });
 
 const toggleStreaming = async () => {
@@ -396,7 +439,7 @@ const toggleStreaming = async () => {
       serverState.value = 'starting';
       const bindAddress = isAutoBind.value ? null : selectedIp.value;
       await invoke('start_server', {
-        port: Number(serverPort.value),
+        port: connectionMode.value === 'web' ? Number(webPort.value) : Number(serverPort.value),
         mode: connectionMode.value,
         bindAddress: bindAddress,
         outputDevice: (outputDevice.value && outputDevice.value !== 'auto' && outputDevice.value !== 'default') ? outputDevice.value : null
@@ -404,6 +447,13 @@ const toggleStreaming = async () => {
       serverState.value = 'connecting';
       if (connectionMode.value === 'usb') {
         await invoke('enable_usb_mode', { port: Number(serverPort.value) });
+      }
+      if (connectionMode.value === 'web') {
+        const info = networkInfo.value;
+        const ip = info && info.ips.length > 0 ? info.ips[0] : 'localhost';
+        const url = `https://${ip}:${webPort.value}`;
+        webUrl.value = url;
+        generateQrCode(url);
       }
     } catch (e: any) {
       console.error(e);
@@ -745,11 +795,20 @@ watchEffect(() => {
 
           <!-- Web QR Card -->
           <div v-else class="haze-surface rounded-2xl p-3 flex flex-col items-center justify-center gap-2">
-            <span class="text-xs text-on-surface-variant font-medium self-start">Web Connection</span>
-            <div class="w-24 h-24 bg-white rounded-xl flex items-center justify-center border border-surface-variant/50 shadow-inner">
-              <Scan class="w-10 h-10 text-surface-variant" />
+            <span class="text-xs text-on-surface-variant font-medium self-start">{{ $t('app.web.title') }}</span>
+            <div v-if="serverState === 'idle'" class="w-full">
+                <span class="text-[10px] text-on-surface-variant">Port</span>
+                <input v-model="webPort" type="number"
+                    class="w-full bg-surface-variant/40 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all" />
             </div>
-            <span class="text-[10px] text-on-surface-variant text-center leading-tight">Scan to connect<br/>(Coming Soon)</span>
+            <button v-if="serverState !== 'idle'" @click="showQrDialog = true"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 active:scale-[0.98] transition-all">
+              <QrCodeIcon class="w-4 h-4" />
+              <span>{{ qrDataUrl ? $t('app.web.scanToConnect') : $t('app.status.connectingDesc', { port: webPort }) }}</span>
+            </button>
+            <span v-if="serverState !== 'idle' && webClientCount > 0" class="text-xs text-primary font-medium">
+              {{ $t('app.web.clientsConnected', { count: webClientCount }) }}
+            </span>
           </div>
 
           <!-- Status Card -->
@@ -762,7 +821,7 @@ watchEffect(() => {
             <div>
               <h3 class="text-sm font-bold">{{ serverState === 'streaming' ? $t('app.status.streaming') : (serverState === 'connecting' ? $t('app.status.connecting') : (serverState === 'starting' ? $t('app.status.starting') : $t('app.status.ready'))) }}</h3>
               <p class="text-xs text-on-surface-variant mt-1 max-w-[200px] mx-auto">
-                {{ serverState === 'streaming' ? $t('app.status.streamingDesc') : (serverState === 'connecting' ? $t('app.status.connectingDesc', { port: serverPort }) : (serverState === 'starting' ? $t('app.status.startingDesc') : $t('app.status.readyDesc'))) }}
+                {{ statusDescription }}
               </p>
             </div>
           </div>
@@ -851,6 +910,14 @@ watchEffect(() => {
       :details="errorDetails"
       @dismiss="showErrorDialog = false"
       @retry="showErrorDialog = false; toggleStreaming()"
+    />
+
+    <QrCodeDialog
+      :show="showQrDialog"
+      :qr-data-url="qrDataUrl"
+      :web-url="webUrl"
+      :client-count="webClientCount"
+      @dismiss="showQrDialog = false"
     />
 
     <!-- IP Switch Confirmation Dialog -->

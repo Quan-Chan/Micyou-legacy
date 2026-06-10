@@ -424,6 +424,25 @@
           <div v-else-if="currentSection === 'equalizer'" class="space-y-6 h-[600px]" key="equalizer">
             <EqualizerPanel :config="settings.equalizer" />
           </div>
+
+          <!-- NETWORK SECTION -->
+          <div v-else-if="currentSection === 'network'" class="space-y-6" key="network">
+            <div v-if="connectionMode === 'web'" class="bg-surface-bright/60 backdrop-blur-lg rounded-2xl p-4 flex items-center justify-between shadow-sm border border-white/5">
+              <div>
+                <div class="text-sm font-medium text-on-surface">{{ $t('settings.webPort.title') }}</div>
+                <div class="text-xs text-on-surface-variant">{{ $t('settings.webPort.desc') }}</div>
+              </div>
+              <input 
+                v-model="webPort"
+                type="number" 
+                class="w-24 bg-surface-variant/40 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+              />
+            </div>
+            <div v-else class="flex flex-col items-center justify-center py-12 text-center opacity-50">
+              <Globe class="w-12 h-12 mb-4 text-on-surface-variant" />
+              <p class="text-sm text-on-surface-variant">{{ $t('settings.webPort.webOnly') }}</p>
+            </div>
+          </div>
           
           <!-- PLUGINS (TODO placeholder) -->
           <div v-else-if="currentSection === 'plugins'" class="flex flex-col items-center justify-center py-12 text-center opacity-50" key="plugins">
@@ -557,7 +576,8 @@ import {
   ChevronRight,
   ArrowRight,
   SlidersHorizontal,
-  Palette
+  Palette,
+  Network
 } from 'lucide-vue-next';
 import ContributorsDialog from './ContributorsDialog.vue';
 import SponsorsDialog from './SponsorsDialog.vue';
@@ -598,6 +618,8 @@ const closeBehavior = useStorage<'ask' | 'hide' | 'exit' | null>('micyou_remembe
 const startMinimized = useStorage<boolean>('micyou_start_minimized', false);
 const notificationsEnabled = useStorage<boolean>('micyou_notifications', true);
 const autoStream = useStorage<boolean>('micyou_auto_stream', false);
+const connectionMode = useStorage<'wifi' | 'usb' | 'web'>('micyou_connectionMode', 'wifi');
+const webPort = useStorage('micyou_webPort', 8443);
 const autostartEnabled = ref(false);
 
 const applyCustomColor = (color: { h: number, s: number, l: number }) => {
@@ -612,6 +634,7 @@ const sections = computed(() => [
   { id: 'appearance', name: t('settings.categories.appearance'), icon: Palette },
   { id: 'audio', name: t('settings.categories.audio'), icon: Mic },
   { id: 'equalizer', name: t('settings.equalizer.title'), icon: SlidersHorizontal },
+  { id: 'network', name: t('settings.categories.network'), icon: Network },
   { id: 'plugins', name: t('settings.categories.plugins'), icon: Puzzle },
   { id: 'about', name: t('settings.categories.about'), icon: Info },
 ]);

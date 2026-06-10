@@ -72,6 +72,7 @@ const syncTheme = () => {
 
 const connectionMode = ref(localStorage.getItem('popup_connectionMode') || 'wifi');
 const serverPort = ref(Number(localStorage.getItem('popup_serverPort')) || 8554);
+const webPort = ref(Number(localStorage.getItem('popup_webPort')) || 8443);
 
 const modes = [
   { value: 'wifi', icon: Wifi, label: 'Wi-Fi' },
@@ -95,6 +96,12 @@ const updatePort = (e: Event) => {
   emitUpdate('popup_serverPort', String(val));
 };
 
+const updateWebPort = (e: Event) => {
+  const val = Number((e.target as HTMLInputElement).value);
+  webPort.value = val;
+  emitUpdate('popup_webPort', String(val));
+};
+
 const openSettings = () => {
   emitUpdate('popup_openSettings', 'true');
 };
@@ -102,6 +109,7 @@ const openSettings = () => {
 const refreshState = () => {
   connectionMode.value = localStorage.getItem('popup_connectionMode') || 'wifi';
   serverPort.value = Number(localStorage.getItem('popup_serverPort')) || 8554;
+  webPort.value = Number(localStorage.getItem('popup_webPort')) || 8443;
 };
 
 // Blur = user clicked away → animate out then hide
@@ -191,8 +199,16 @@ onUnmounted(() => {
         <div class="px-3 py-2 border-t border-outline/10">
           <div class="text-[10px] text-on-surface-variant font-medium mb-1.5 uppercase tracking-wider">{{ t('app.port') }}</div>
           <input
+            v-if="connectionMode !== 'web'"
             :value="serverPort"
             @input="updatePort"
+            type="number"
+            class="w-full bg-surface-variant/40 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <input
+            v-else
+            :value="webPort"
+            @input="updateWebPort"
             type="number"
             class="w-full bg-surface-variant/40 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           />

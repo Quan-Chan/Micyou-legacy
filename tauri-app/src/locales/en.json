@@ -24,7 +24,21 @@
       "usb": "Connected via USB",
       "disconnected": "Not Connected",
       "waiting": "Waiting for connection...",
-      "running": "MicYou Service Running"
+      "running": "MicYou Service Running",
+      "web": "Connected via Web",
+      "webClients": "{count} client(s) connected",
+      "webWaiting": "Waiting for browser connections..."
+    },
+    "web": {
+      "title": "Web Connection",
+      "scanToConnect": "Scan to connect",
+      "clientsConnected": "{count} client(s) connected",
+      "noClients": "Waiting for connection...",
+      "webUrl": "Web URL",
+      "openInBrowser": "Open in Browser",
+      "dialogTitle": "Web Connection",
+      "copyUrl": "Copy URL",
+      "close": "Close"
     },
     "notify": {
       "connected": "Device connected successfully.",
@@ -58,6 +72,7 @@
       "general": "General",
       "appearance": "Appearance",
       "audio": "Audio",
+      "network": "Network",
       "plugins": "Plugins",
       "about": "About"
     },
@@ -166,6 +181,11 @@
     "plugins": {
       "underConstruction": "Under Construction",
       "portedDesc": "This section is being ported from the KMP version."
+    },
+    "webPort": {
+      "title": "Web Port",
+      "desc": "Port for Web connection mode (default: 8443)",
+      "webOnly": "Switch to Web connection mode to configure this setting."
     },
     "about": {
       "version": "Application Version",

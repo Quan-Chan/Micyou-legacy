@@ -10,6 +10,7 @@ pub mod adb_manager;
 pub mod stats;
 pub mod tray;
 pub mod vbcable;
+pub mod web_server;
 
 use tauri::{Emitter, AppHandle, Manager, State};
 use std::sync::Arc;
@@ -31,6 +32,8 @@ pub struct ServerState {
     pub active_socket_handle: Arc<Mutex<Option<std::os::windows::io::RawSocket>>>,
     #[cfg(unix)]
     pub active_socket_handle: Arc<Mutex<Option<std::os::unix::io::RawFd>>>,
+    pub web_server: Arc<Mutex<Option<web_server::WebServer>>>,
+    pub web_mdns: Arc<Mutex<Option<network::NetworkManager>>>,
 }
 
 #[tauri::command]
@@ -203,7 +206,10 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
     let dsp_settings = state.dsp_settings.clone();
 
     let (audio_tx, mut audio_rx) = tokio::sync::mpsc::channel(1024);
+
+    // Start audio output pipeline (shared by all modes)
     let app_handle_audio = app_handle.clone();
+    let is_web_mode = _mode == "web";
     std::thread::spawn(move || {
         let mut audio_manager = audio_engine::AudioOutputManager::new();
         if let Err(e) = audio_manager.start(output_device) {
@@ -212,12 +218,10 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
         }
 
         let mut dsp_processor = {
-            // Try to find resources dir next to the executable
             let exe_dir = std::env::current_exe()
                 .ok()
                 .and_then(|p| p.parent().map(|d| d.to_path_buf()));
             let resources_dir = exe_dir.as_ref().and_then(|d| {
-                // Check next to exe first, then in resources subdir
                 let model_direct = d.join("ulunas.onnx");
                 if model_direct.exists() {
                     return Some(d.clone());
@@ -226,7 +230,6 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                 if res_dir.join("ulunas.onnx").exists() {
                     return Some(res_dir);
                 }
-                // Check in src-tauri/resources during development
                 let dev_res = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources");
                 if dev_res.join("ulunas.onnx").exists() {
                     return Some(dev_res);
@@ -237,38 +240,38 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
         };
         let mut jb = jitter_buffer::JitterBuffer::new(12);
         let mut frame_counter = 0;
-        // Input resampler: converts from input sample rate to 48kHz for DSP processing
         let mut input_resampler: Option<audio_engine::RubatoResampler> = None;
         let mut current_input_sample_rate: u32 = 0;
 
         while let Some(packet) = audio_rx.blocking_recv() {
             jb.push(packet);
-            while let Some(ordered_packet) = jb.pop() {
+            let packets: Vec<_> = std::iter::from_fn(|| jb.pop()).collect();
+
+            for ordered_packet in packets {
                 if let Some(audio_data) = ordered_packet.audio_packet {
                     let mut pcm_f32 = Vec::new();
                     match audio_data.audio_format {
-                        2 => { // PCM 16-bit
+                        2 => {
                             for chunk in audio_data.buffer.chunks_exact(2) {
                                 let sample_i16 = i16::from_le_bytes([chunk[0], chunk[1]]);
                                 pcm_f32.push(sample_i16 as f32 / 32768.0);
                             }
                         }
-                        3 => { // PCM 8-bit
+                        3 => {
                             for &byte in &audio_data.buffer {
                                 let sample_f32 = (byte as f32 - 128.0) / 128.0;
                                 pcm_f32.push(sample_f32);
                             }
                         }
-                        4 => { // PCM Float
+                        4 => {
                             for chunk in audio_data.buffer.chunks_exact(4) {
                                 let sample_f32 = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
                                 pcm_f32.push(sample_f32);
                             }
                         }
-                        6 => { // PCM 24-bit
+                        6 => {
                             for chunk in audio_data.buffer.chunks_exact(3) {
                                 let sample24 = (chunk[0] as i32) | ((chunk[1] as i32) << 8) | ((chunk[2] as i32) << 16);
-                                // 24-bit signed to f32
                                 let sample_f32 = (sample24 as f32) / 8388608.0;
                                 pcm_f32.push(sample_f32);
                             }
@@ -282,9 +285,7 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                         let channels = audio_data.channel_count as usize;
                         let sample_rate = audio_data.sample_rate as u32;
 
-                        // Resample input to 48kHz if needed (DSP assumes 48kHz)
                         if sample_rate > 0 && sample_rate != 48000 {
-                            // Recreate resampler if sample rate changed
                             if current_input_sample_rate != sample_rate {
                                 input_resampler = Some(audio_engine::RubatoResampler::new(
                                     sample_rate, 48000, channels.max(1)
@@ -306,7 +307,14 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                             0.0
                         };
 
-                        let (_raw_rms, processed_rms) = dsp_processor.process(&mut pcm_f32, channels.max(1), queued_ms);
+                        // Web mode: skip DSP for now, output raw audio directly
+                        let processed_rms = if is_web_mode {
+                            let sum: f32 = pcm_f32.iter().map(|x| x * x).sum();
+                            (sum / pcm_f32.len() as f32).sqrt()
+                        } else {
+                            let (_raw, processed) = dsp_processor.process(&mut pcm_f32, channels.max(1), queued_ms);
+                            processed
+                        };
 
                         audio_manager.push_audio_data(&pcm_f32, channels.max(1));
 
@@ -315,7 +323,6 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
                             let level = (processed_rms * 500.0).min(100.0) as u32;
                             let _ = app_handle_audio.emit("audio-level", level);
 
-                            // Emit spectrum data
                             let (raw_spec, proc_spec) = dsp_processor.get_spectrums();
                             let _ = app_handle_audio.emit("audio-spectrum", SpectrumPayload {
                                 raw: raw_spec,
@@ -327,6 +334,45 @@ async fn start_server(app_handle: AppHandle, state: State<'_, ServerState>, port
             }
         }
     });
+
+    // Web mode: start web server and return (skip TCP/UDP)
+    if _mode == "web" {
+        let web_port = port;
+        let web_server_instance = web_server::WebServer::new();
+
+        let (web_audio_tx, mut web_audio_rx) = tokio::sync::mpsc::channel::<crate::protocol::micyou::AudioPacketMessage>(1024);
+
+        web_server_instance.start(web_port, app_handle.clone(), web_audio_tx).await
+            .map_err(|e| format!("Failed to start web server: {}", e))?;
+
+        let mut web_mdns_lock = state.web_mdns.lock().await;
+        match network::NetworkManager::start_web_mdns(web_port, &bind_addr) {
+            Ok(manager) => *web_mdns_lock = Some(manager),
+            Err(e) => eprintln!("Failed to start web mDNS: {}", e),
+        }
+
+        *state.web_server.lock().await = Some(web_server_instance);
+
+        let audio_tx_web = audio_tx;
+        tokio::spawn(async move {
+            let mut seq: i32 = 0;
+            while let Some(packet) = web_audio_rx.recv().await {
+                let ordered = crate::protocol::micyou::AudioPacketMessageOrdered {
+                    sequence_number: seq,
+                    audio_packet: Some(packet),
+                    timestamp: 0,
+                    fec_buffer: Vec::new(),
+                    fec_sequence_number: -1,
+                };
+                seq += 1;
+                if audio_tx_web.send(ordered).await.is_err() {
+                    break;
+                }
+            }
+        });
+
+        return Ok(format!("Web server started on port {}", web_port));
+    }
 
     let app_handle_tcp = app_handle.clone();
     let token_tcp = cancel_token.clone();
@@ -373,6 +419,19 @@ async fn stop_server(app: AppHandle, state: State<'_, ServerState>) -> Result<St
         *conn_tx_lock = None;
     }
 
+    {
+        let mut web_lock = state.web_server.lock().await;
+        if let Some(web) = web_lock.take() {
+            web.stop();
+        }
+    }
+    {
+        let mut web_mdns_lock = state.web_mdns.lock().await;
+        if let Some(web_mdns) = web_mdns_lock.take() {
+            web_mdns.stop_mdns();
+        }
+    }
+
     let mut mdns_lock = state.mdns_manager.lock().await;
     if let Some(mdns) = mdns_lock.take() {
         mdns.stop_mdns();
@@ -409,6 +468,28 @@ fn set_tray_state(app: AppHandle, state: TrayState) -> Result<(), String> {
 fn main_window<R: tauri::Runtime>(app: &AppHandle<R>) -> Result<tauri::WebviewWindow<R>, String> {
     app.get_webview_window("main")
         .ok_or_else(|| "main window not found".to_string())
+}
+
+#[derive(serde::Serialize)]
+struct WebStatus {
+    running: bool,
+    client_count: u32,
+}
+
+#[tauri::command]
+async fn get_web_status(state: State<'_, ServerState>) -> Result<WebStatus, String> {
+    let lock = state.web_server.lock().await;
+    if let Some(web) = lock.as_ref() {
+        Ok(WebStatus {
+            running: web.is_running(),
+            client_count: web.client_count() as u32,
+        })
+    } else {
+        Ok(WebStatus {
+            running: false,
+            client_count: 0,
+        })
+    }
 }
 
 #[tauri::command]
@@ -468,6 +549,8 @@ pub fn run() {
             network_stats: Arc::new(NetworkStats::default()),
             connection_tx: Arc::new(Mutex::new(None)),
             active_socket_handle: Arc::new(Mutex::new(None)),
+            web_server: Arc::new(Mutex::new(None)),
+            web_mdns: Arc::new(Mutex::new(None)),
         })
         .plugin(tauri_plugin_log::Builder::new()
             .level(log::LevelFilter::Info)
@@ -504,6 +587,7 @@ pub fn run() {
             hide_main_window,
             exit_app,
             set_mute_state,
+            get_web_status,
             vbcable::check_vbcable,
             vbcable::install_vbcable,
         ])

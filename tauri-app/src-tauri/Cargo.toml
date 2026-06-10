@@ -47,6 +47,11 @@ socket2 = "0.6.4"
 log = "0.4.32"
 tauri-plugin-notification = "2.3.3"
 zip = "2"
+axum = { version = "0.8", features = ["ws"] }
+rcgen = "0.13"
+rustls = "0.23"
+tokio-rustls = "0.26"
+rustls-pemfile = "2"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winsock2"] }

@@ -20,8 +20,8 @@ import appIconSvg from './assets/app_icon.svg?raw';
 import anime from 'animejs';
 
 const serverState = ref<'idle' | 'connecting' | 'streaming'>('idle');
-const connectionMode = ref<'wifi' | 'usb' | 'web'>('wifi');
-const serverPort = ref(6000);
+const connectionMode = useStorage<'wifi' | 'usb' | 'web'>('micyou_connectionMode', 'wifi');
+const serverPort = useStorage('micyou_serverPort', 8554);
 const audioLevel = ref(0);
 const networkInfo = ref<{ ips: string[], port: number } | null>(null);
 const selectedIp = ref<string>('0.0.0.0');

@@ -71,7 +71,7 @@ const syncTheme = () => {
 };
 
 const connectionMode = ref(localStorage.getItem('popup_connectionMode') || 'wifi');
-const serverPort = ref(Number(localStorage.getItem('popup_serverPort')) || 6000);
+const serverPort = ref(Number(localStorage.getItem('popup_serverPort')) || 8554);
 
 const modes = [
   { value: 'wifi', icon: Wifi, label: 'Wi-Fi' },
@@ -101,7 +101,7 @@ const openSettings = () => {
 
 const refreshState = () => {
   connectionMode.value = localStorage.getItem('popup_connectionMode') || 'wifi';
-  serverPort.value = Number(localStorage.getItem('popup_serverPort')) || 6000;
+  serverPort.value = Number(localStorage.getItem('popup_serverPort')) || 8554;
 };
 
 // Blur = user clicked away → animate out then hide

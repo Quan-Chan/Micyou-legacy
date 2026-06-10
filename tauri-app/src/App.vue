@@ -16,6 +16,7 @@ import UdpWarningDialog from './components/UdpWarningDialog.vue';
 import PocketLayout from './components/PocketLayout.vue';
 import CloseConfirmDialog from './components/CloseConfirmDialog.vue';
 import { useTray } from './composables/useTray';
+import appIconSvg from './assets/app_icon.svg?raw';
 
 const serverState = ref<'idle' | 'connecting' | 'streaming'>('idle');
 const connectionMode = ref<'wifi' | 'usb' | 'web'>('wifi');
@@ -472,9 +473,7 @@ const micScale = computed(() => {
       <!-- Header Section -->
       <div data-tauri-drag-region class="haze-surface rounded-2xl flex justify-between items-center px-4 py-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
         <div data-tauri-drag-region class="flex items-center gap-3">
-          <div data-tauri-drag-region class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center shadow-sm border border-primary/20 pointer-events-none">
-            <RadioTower class="w-5 h-5 text-primary" />
-          </div>
+          <div class="w-8 h-8 text-primary pointer-events-none [&>svg]:w-full [&>svg]:h-full" v-html="appIconSvg"></div>
           <div class="flex flex-col">
             <span class="text-sm font-extrabold text-primary">MicYou Desktop</span>
             <span class="text-[11px] text-on-surface-variant font-medium">Server</span>

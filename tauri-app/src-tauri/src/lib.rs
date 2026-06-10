@@ -463,6 +463,7 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--minimized"]),
         ))
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             app.manage(TrayContext::default());
             if let Err(e) = crate::tray::build_tray(app.handle()) {

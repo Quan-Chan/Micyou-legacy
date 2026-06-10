@@ -26,6 +26,10 @@
       "waiting": "Waiting for connection...",
       "running": "MicYou Service Running"
     },
+    "notify": {
+      "connected": "Device connected successfully.",
+      "disconnected": "Device disconnected."
+    },
     "ipSelector": {
       "allInterfaces": "All Interfaces",
       "allInterfacesDesc": "Listen on all network interfaces",
@@ -245,5 +249,9 @@
   "autostart": {
     "title": "Run at Startup",
     "desc": "Automatically start MicYou when you log in to your computer."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "desc": "Show system notifications when device connects or disconnects."
   }
 }

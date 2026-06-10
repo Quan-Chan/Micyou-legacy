@@ -4,6 +4,7 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { useStorage } from '@vueuse/core';
+import { sendNotification, isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
 
 // Icons
 import { Mic, Wifi, RadioTower, Globe, ChevronDown, CheckCircle2, Settings, Link, Unlink, RefreshCw, Scan, ActivitySquare as MonitoringIcon, X, Minus, VolumeX, Volume2 } from 'lucide-vue-next';
@@ -22,6 +23,7 @@ import anime from 'animejs';
 const serverState = ref<'idle' | 'starting' | 'connecting' | 'streaming'>('idle');
 const connectionMode = useStorage<'wifi' | 'usb' | 'web'>('micyou_connectionMode', 'wifi');
 const serverPort = useStorage('micyou_serverPort', 8554);
+const notificationsEnabled = useStorage<boolean>('micyou_notifications', true);
 const audioLevel = ref(0);
 const networkInfo = ref<{ ips: string[], port: number } | null>(null);
 const selectedIp = ref<string>('0.0.0.0');
@@ -69,6 +71,14 @@ const showCloseConfirm = ref(false);
 
 function isStreaming(v: typeof serverState.value) {
   return v === 'streaming' || v === 'connecting' || v === 'starting';
+}
+
+async function notify(body: string) {
+  const granted = await isPermissionGranted();
+  if (!granted) {
+    await requestPermission();
+  }
+  sendNotification({ title: 'MicYou', body });
 }
 
 const streamingRef = computed(() => isStreaming(serverState.value));
@@ -315,12 +325,18 @@ onMounted(async () => {
 
   unlistenDeviceConnected = await listen('device-connected', () => {
     serverState.value = 'streaming';
+    if (notificationsEnabled.value) {
+      notify(t('app.notify.connected'));
+    }
   });
 
   unlistenDeviceDisconnected = await listen('device-disconnected', () => {
     if (serverState.value === 'streaming') {
       serverState.value = 'connecting'; // Go back to waiting for device
       audioLevel.value = 0;
+      if (notificationsEnabled.value) {
+        notify(t('app.notify.disconnected'));
+      }
     }
   });
 

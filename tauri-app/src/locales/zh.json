@@ -26,6 +26,10 @@
       "waiting": "等待连接中...",
       "running": "MicYou 服务运行中"
     },
+    "notify": {
+      "connected": "设备已成功连接",
+      "disconnected": "设备已断开连接"
+    },
     "ipSelector": {
       "allInterfaces": "所有网卡",
       "allInterfacesDesc": "监听所有网络接口",
@@ -245,5 +249,9 @@
   "autostart": {
     "title": "开机自启",
     "desc": "登录电脑时自动启动 MicYou"
+  },
+  "notifications": {
+    "title": "系统通知",
+    "desc": "设备连接或断开时显示系统通知"
   }
 }

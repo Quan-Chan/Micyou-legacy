@@ -495,6 +495,12 @@
   body {
     @apply bg-transparent text-foreground;
   }
+
+  /* Disable text selection for non-input elements */
+  *:not(input):not(textarea):not(select):not([contenteditable]):not([contenteditable="true"]):not([contenteditable=""]) {
+    user-select: none;
+    -webkit-user-select: none;
+  }
   
   /* Custom Scrollbar */
   ::-webkit-scrollbar {

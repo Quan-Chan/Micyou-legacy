@@ -42,7 +42,8 @@
     },
     "notify": {
       "connected": "Device connected successfully.",
-      "disconnected": "Device disconnected."
+      "disconnected": "Device disconnected.",
+      "usbDisconnected": "USB disconnected. Please reconnect the cable and click Connect."
     },
     "ipSelector": {
       "allInterfaces": "All Interfaces",
@@ -50,6 +51,11 @@
       "switchConfirmTitle": "Switch Network Interface",
       "switchConfirmMessage": "Switching the network interface will restart the connection. Continue?",
       "continue": "Continue",
+      "cancel": "Cancel"
+    },
+    "deviceSelector": {
+      "title": "Select USB Device",
+      "desc": "Multiple devices detected. Please select a device to connect:",
       "cancel": "Cancel"
     },
     "monitoring": {

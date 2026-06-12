@@ -42,11 +42,13 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn enable_usb_mode(port: u16) -> Result<String, String> {
-    match adb_manager::run_adb_reverse(port) {
-        Ok(_) => Ok("ADB reverse successful. USB mode ready.".to_string()),
-        Err(e) => Err(e),
-    }
+fn enable_usb_mode(port: u16, device_serial: Option<String>) -> Result<adb_manager::UsbModeResult, String> {
+    adb_manager::enable_usb_mode(port, device_serial.as_deref())
+}
+
+#[tauri::command]
+fn list_adb_devices() -> Result<Vec<adb_manager::AdbDevice>, String> {
+    adb_manager::list_adb_devices()
 }
 
 #[derive(serde::Serialize)]
@@ -572,6 +574,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             enable_usb_mode,
+            list_adb_devices,
             get_network_info,
             get_network_interfaces,
             get_audio_devices,

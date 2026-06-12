@@ -42,7 +42,8 @@
     },
     "notify": {
       "connected": "设备已成功连接",
-      "disconnected": "设备已断开连接"
+      "disconnected": "设备已断开连接",
+      "usbDisconnected": "USB 已断开，请重新插上数据线后点击连接"
     },
     "ipSelector": {
       "allInterfaces": "所有网卡",
@@ -50,6 +51,11 @@
       "switchConfirmTitle": "切换网卡",
       "switchConfirmMessage": "切换网络接口将重启连接，是否继续？",
       "continue": "继续",
+      "cancel": "取消"
+    },
+    "deviceSelector": {
+      "title": "选择 USB 设备",
+      "desc": "检测到多个设备，请选择要连接的设备：",
       "cancel": "取消"
     },
     "monitoring": {

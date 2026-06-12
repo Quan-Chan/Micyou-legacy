@@ -2,8 +2,22 @@ use std::process::Command;
 use std::env;
 use std::path::PathBuf;
 
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+pub struct AdbDevice {
+    pub serial: String,
+    pub state: String,
+    pub description: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(tag = "type")]
+pub enum UsbModeResult {
+    Success,
+    NoDevices,
+    MultipleDevices { devices: Vec<AdbDevice> },
+}
+
 pub fn find_adb() -> Option<PathBuf> {
-    // 1. Try PATH
     if let Ok(path) = env::var("PATH") {
         let separator = if cfg!(windows) { ";" } else { ":" };
         let executable = if cfg!(windows) { "adb.exe" } else { "adb" };
@@ -17,7 +31,6 @@ pub fn find_adb() -> Option<PathBuf> {
         }
     }
 
-    // 2. Try Common Locations
     let common_paths = if cfg!(windows) {
         vec![
             format!("{}\\Android\\Sdk\\platform-tools\\adb.exe", env::var("LOCALAPPDATA").unwrap_or_default()),
@@ -45,10 +58,98 @@ pub fn find_adb() -> Option<PathBuf> {
     None
 }
 
-pub fn run_adb_reverse(port: u16) -> Result<(), String> {
+fn parse_adb_devices(output: &str) -> Vec<AdbDevice> {
+    let mut devices = Vec::new();
+    
+    for line in output.lines() {
+        let line = line.trim().trim_end_matches('\r');
+        if line.is_empty() || line.starts_with("List of") || line.starts_with("*") {
+            continue;
+        }
+        
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() >= 2 {
+            let serial = parts[0].to_string();
+            let state = parts[1].to_string();
+            
+            if state == "offline" {
+                continue;
+            }
+            
+            let mut description = serial.clone();
+            for part in &parts[2..] {
+                if let Some(val) = part.strip_prefix("model:") {
+                    description = val.to_string();
+                    break;
+                }
+            }
+            
+            devices.push(AdbDevice {
+                serial,
+                state,
+                description,
+            });
+        }
+    }
+    
+    devices
+}
+
+pub fn list_adb_devices() -> Result<Vec<AdbDevice>, String> {
     let adb = find_adb().ok_or("ADB not found in PATH or common locations")?;
     
     let output = Command::new(adb)
+        .arg("devices")
+        .arg("-l")
+        .output()
+        .map_err(|e| format!("Failed to execute adb command: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    
+    if !output.status.success() && stdout.trim().is_empty() {
+        return Err(format!("ADB devices command failed: {}", stderr));
+    }
+
+    let devices = parse_adb_devices(&stdout);
+    Ok(devices)
+}
+
+pub fn enable_usb_mode(port: u16, device_serial: Option<&str>) -> Result<UsbModeResult, String> {
+    let adb = find_adb().ok_or("ADB not found in PATH or common locations")?;
+    
+    if let Some(serial) = device_serial {
+        run_adb_reverse(&adb, port, Some(serial))?;
+        return Ok(UsbModeResult::Success);
+    }
+    
+    let output = Command::new(&adb)
+        .arg("devices")
+        .arg("-l")
+        .output()
+        .map_err(|e| format!("Failed to execute adb command: {}", e))?;
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let devices = parse_adb_devices(&stdout);
+    
+    match devices.len() {
+        0 => Ok(UsbModeResult::NoDevices),
+        1 => {
+            run_adb_reverse(&adb, port, Some(&devices[0].serial))?;
+            Ok(UsbModeResult::Success)
+        }
+        _ => Ok(UsbModeResult::MultipleDevices { devices }),
+    }
+}
+
+fn run_adb_reverse(adb: &PathBuf, port: u16, serial: Option<&str>) -> Result<(), String> {
+    let mut cmd = Command::new(adb);
+    
+    if let Some(s) = serial {
+        cmd.arg("-s").arg(s);
+    }
+    
+    let output = cmd
         .arg("reverse")
         .arg(format!("tcp:{}", port))
         .arg(format!("tcp:{}", port))

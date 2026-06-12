@@ -56,6 +56,9 @@ const showMonitoringPanel = ref(false);
 const showUdpWarning = ref(false);
 const showErrorDialog = ref(false);
 const showQrDialog = ref(false);
+const showDeviceSelector = ref(false);
+const adbDevices = ref<{ serial: string; state: string; description: string }[]>([]);
+const pendingUsbPort = ref<number>(0);
 const errorDetails = ref<ConnectionErrorDetails | null>(null);
 const audioMetrics = ref<any>(null);
 const outputDevice = ref<string>(localStorage.getItem('micyou_output_device') || '');
@@ -374,12 +377,22 @@ onMounted(async () => {
     }
   });
 
-  unlistenDeviceDisconnected = await listen('device-disconnected', () => {
+  unlistenDeviceDisconnected = await listen('device-disconnected', async () => {
     if (serverState.value === 'streaming') {
-      serverState.value = 'connecting'; // Go back to waiting for device
-      audioLevel.value = 0;
-      if (notificationsEnabled.value) {
-        notify(t('app.notify.disconnected'));
+      if (connectionMode.value === 'usb') {
+        try { await invoke('stop_server'); } catch {}
+        serverState.value = 'idle';
+        audioLevel.value = 0;
+        isMuted.value = false;
+        if (notificationsEnabled.value) {
+          notify(t('app.notify.usbDisconnected'));
+        }
+      } else {
+        serverState.value = 'connecting'; // Go back to waiting for device
+        audioLevel.value = 0;
+        if (notificationsEnabled.value) {
+          notify(t('app.notify.disconnected'));
+        }
       }
     }
   });
@@ -446,7 +459,23 @@ const toggleStreaming = async () => {
       });
       serverState.value = 'connecting';
       if (connectionMode.value === 'usb') {
-        await invoke('enable_usb_mode', { port: Number(serverPort.value) });
+        const result = await invoke<{ type: string; devices?: { serial: string; state: string; description: string }[] }>('enable_usb_mode', { port: Number(serverPort.value), deviceSerial: null });
+        if (result.type === 'MultipleDevices') {
+          try { await invoke('stop_server'); } catch {}
+          adbDevices.value = result.devices || [];
+          pendingUsbPort.value = Number(serverPort.value);
+          showDeviceSelector.value = true;
+          serverState.value = 'idle';
+          return;
+        } else if (result.type === 'NoDevices') {
+          try { await invoke('stop_server'); } catch {}
+          serverState.value = 'idle';
+          const msg = 'No USB devices found. Please connect a device and enable USB debugging.';
+          const type = analyzeError(msg);
+          errorDetails.value = generateErrorDetails(type, msg, connectionMode.value, Number(serverPort.value), selectedIp.value, t);
+          showErrorDialog.value = true;
+          return;
+        }
       }
       if (connectionMode.value === 'web') {
         const info = networkInfo.value;
@@ -457,7 +486,6 @@ const toggleStreaming = async () => {
       }
     } catch (e: any) {
       console.error(e);
-      // Clean up server state on failure (token may already be set in Rust)
       try { await invoke('stop_server'); } catch {}
       const msg = typeof e === 'string' ? e : e?.message ?? String(e);
       const type = analyzeError(msg);
@@ -526,12 +554,54 @@ const confirmIpSwitch = async () => {
       });
       serverState.value = 'connecting';
       if (connectionMode.value === 'usb') {
-        await invoke('enable_usb_mode', { port: Number(serverPort.value) });
+        const result = await invoke<{ type: string; devices?: { serial: string; state: string; description: string }[] }>('enable_usb_mode', { port: Number(serverPort.value), deviceSerial: null });
+        if (result.type === 'MultipleDevices') {
+          try { await invoke('stop_server'); } catch {}
+          adbDevices.value = result.devices || [];
+          pendingUsbPort.value = Number(serverPort.value);
+          showDeviceSelector.value = true;
+          serverState.value = 'idle';
+          return;
+        } else if (result.type === 'NoDevices') {
+          try { await invoke('stop_server'); } catch {}
+          serverState.value = 'idle';
+          return;
+        }
       }
     } catch (e) {
       console.error(e);
     }
   }
+};
+
+const selectAdbDevice = async (serial: string) => {
+  showDeviceSelector.value = false;
+  try {
+    serverState.value = 'starting';
+    const bindAddress = isAutoBind.value ? null : selectedIp.value;
+    await invoke('start_server', {
+      port: pendingUsbPort.value,
+      mode: 'usb',
+      bindAddress: bindAddress,
+      outputDevice: (outputDevice.value && outputDevice.value !== 'auto' && outputDevice.value !== 'default') ? outputDevice.value : null
+    });
+    serverState.value = 'connecting';
+    await invoke('enable_usb_mode', { port: pendingUsbPort.value, deviceSerial: serial });
+  } catch (e: any) {
+    console.error(e);
+    try { await invoke('stop_server'); } catch {}
+    const msg = typeof e === 'string' ? e : e?.message ?? String(e);
+    const type = analyzeError(msg);
+    errorDetails.value = generateErrorDetails(type, msg, 'usb', pendingUsbPort.value, selectedIp.value, t);
+    showErrorDialog.value = true;
+    serverState.value = 'idle';
+  }
+};
+
+const cancelDeviceSelection = () => {
+  showDeviceSelector.value = false;
+  adbDevices.value = [];
+  pendingUsbPort.value = 0;
 };
 
 const toggleMute = async () => {
@@ -944,6 +1014,55 @@ watchEffect(() => {
               @click="confirmIpSwitch"
             >
               {{ t('app.ipSelector.continue') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- USB Device Selector Dialog -->
+    <Transition
+      enter-active-class="transition ease-out duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition ease-in duration-150"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showDeviceSelector" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-surface rounded-2xl shadow-2xl border border-outline/10 p-6 w-96 max-h-[80vh] flex flex-col">
+          <h3 class="text-sm font-bold text-foreground mb-2">{{ t('app.deviceSelector.title') }}</h3>
+          <p class="text-xs text-on-surface-variant mb-4">{{ t('app.deviceSelector.desc') }}</p>
+          
+          <div class="flex-1 overflow-y-auto space-y-2 mb-4">
+            <button
+              v-for="device in adbDevices"
+              :key="device.serial"
+              class="w-full text-left px-4 py-3 rounded-xl bg-surface-variant/30 hover:bg-surface-variant/60 border border-outline/10 hover:border-primary/30 transition-all duration-200 group"
+              @click="selectAdbDevice(device.serial)"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-foreground truncate">
+                    {{ device.description || device.serial }}
+                  </div>
+                  <div class="text-xs text-on-surface-variant mt-0.5">
+                    {{ device.serial }}
+                  </div>
+                </div>
+                <div class="ml-3 flex-shrink-0">
+                  <div class="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div class="flex justify-end">
+            <button
+              class="px-4 py-2 text-xs font-medium text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-colors"
+              @click="cancelDeviceSelection"
+            >
+              {{ t('app.deviceSelector.cancel') }}
             </button>
           </div>
         </div>

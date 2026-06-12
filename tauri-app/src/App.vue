@@ -795,9 +795,8 @@ watchEffect(() => {
 
           <!-- Web QR Card -->
           <div v-else class="haze-surface rounded-2xl p-3 flex flex-col items-center justify-center gap-2">
-            <span class="text-xs text-on-surface-variant font-medium self-start">{{ $t('app.web.title') }}</span>
+            <span class="text-xs text-on-surface-variant font-medium self-start">{{ $t('app.port') }}</span>
             <div v-if="serverState === 'idle'" class="w-full">
-                <span class="text-[10px] text-on-surface-variant">Port</span>
                 <input v-model="webPort" type="number"
                     class="w-full bg-surface-variant/40 border border-white/5 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all" />
             </div>

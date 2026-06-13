@@ -103,15 +103,6 @@ async fn handle_client(mut socket: TcpStream, addr: SocketAddr, app_handle: AppH
     let current_time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as u64;
     stats.mark_tcp_connected(current_time);
 
-    let mut buffer = BytesMut::with_capacity(8192);
-
-    // 2. Channel for writing
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<MessageWrapper>(100);
-    {
-        let mut lock = connection_tx.lock().await;
-        *lock = Some(tx.clone());
-    }
-
     // Extract raw socket handle BEFORE into_split() consumes the stream.
     // The OS socket stays alive via the split halves; stop_server can call
     // force_close_socket() on the raw handle to force-close the connection.

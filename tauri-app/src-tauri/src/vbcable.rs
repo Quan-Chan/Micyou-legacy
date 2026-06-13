@@ -4,8 +4,7 @@ use std::path::PathBuf;
 #[cfg(feature = "vbcable")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
-const CABLE_OUTPUT_NAME: &str = "CABLE Output";
-const CABLE_INPUT_NAME: &str = "CABLE Input";
+
 
 #[derive(Debug, Clone, Serialize)]
 pub struct VBCableResult {
@@ -76,14 +75,7 @@ fn temp_dir() -> PathBuf {
 }
 
 #[cfg(feature = "vbcable")]
-fn get_installer_path() -> Option<PathBuf> {
-    let base = std::env::current_dir().ok()?;
-    let paths = [
-        base.join(INSTALLER_DIR).join(INSTALLER_NAME),
-        base.join(INSTALLER_NAME),
-    ];
-    paths.iter().find(|p| p.exists()).cloned()
-}
+
 
 #[cfg(feature = "vbcable")]
 async fn download_installer(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -208,7 +200,7 @@ async fn configure_devices(app: &tauri::AppHandle) -> Result<(), String> {
 pub async fn install(app: tauri::AppHandle) -> VBCableResult {
     use tauri::Emitter;
 
-    if !IS_INSTALLING.compare_and_swap(false, true, Ordering::SeqCst) {
+    if IS_INSTALLING.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
         return VBCableResult {
             success: false,
             error_type: Some("already_installing".to_string()),

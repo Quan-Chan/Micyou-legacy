@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 pub mod network;
 pub mod tcp_server;
 pub mod udp_server;
@@ -546,7 +548,7 @@ fn exit_app(app: AppHandle, state: State<'_, ServerState>) -> Result<(), String>
 }
 
 #[tauri::command]
-async fn set_mute_state(app: AppHandle, state: State<'_, ServerState>, is_muted: bool) -> Result<(), String> {
+async fn set_mute_state(_app: AppHandle, state: State<'_, ServerState>, is_muted: bool) -> Result<(), String> {
     let mute_msg = micyou_protocol::micyou::MessageWrapper {
         audio_packet: None,
         connect: None,
@@ -566,6 +568,7 @@ async fn set_mute_state(app: AppHandle, state: State<'_, ServerState>, is_muted:
 }
 
 #[cfg(target_os = "macos")]
+#[allow(unexpected_cfgs)]
 fn apply_macos_vibrancy(win: &tauri::WebviewWindow) {
     use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
 
@@ -582,6 +585,7 @@ fn apply_macos_vibrancy(win: &tauri::WebviewWindow) {
     use objc::{msg_send, sel, sel_impl};
 
     if let Ok(ptr) = win.ns_window() {
+        #[allow(unexpected_cfgs)]
         unsafe {
             let ns_window = ptr as *mut Object;
             if let Some(ns_color) = Class::get("NSColor") {

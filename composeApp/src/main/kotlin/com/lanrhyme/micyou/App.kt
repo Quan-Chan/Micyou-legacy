@@ -19,10 +19,26 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
+import com.lanrhyme.micyou.network.ConnectionErrorDetails
+import com.lanrhyme.micyou.theme.AppTheme
+import com.lanrhyme.micyou.theme.ThemeMode
+import com.lanrhyme.micyou.ui.dialog.PermissionDialog
+import com.lanrhyme.micyou.ui.MobileHome
+import com.lanrhyme.micyou.update.UpdateInfo
+import com.lanrhyme.micyou.util.ContextHelper
+import com.lanrhyme.micyou.util.currentTimeSeconds
+import com.lanrhyme.micyou.util.formatBytes
+import com.lanrhyme.micyou.util.setAppLocale
+import com.lanrhyme.micyou.viewmodel.UpdateDownloadState
+import com.lanrhyme.micyou.util.openUrl
+import com.lanrhyme.micyou.util.PermissionState
+import com.lanrhyme.micyou.viewmodel.MainViewModel
+import androidx.activity.ComponentActivity
 
 @Composable
 fun App(
     viewModel: MainViewModel? = null,
+    activity: ComponentActivity? = null,
     // Permission dialog parameters (Android)
     showPermissionDialog: Boolean = false,
     currentPermissions: List<PermissionState> = emptyList(),
@@ -144,8 +160,8 @@ fun App(
                     text = {
                         Column(
                             modifier = Modifier
-                                .widthIn(min = 400.dp, max = 500.dp)
-                                .heightIn(max = 450.dp)
+                                .widthIn(min = 320.dp, max = 420.dp)
+                                .heightIn(max = 400.dp)
                                 .verticalScroll(rememberScrollState()),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
@@ -154,7 +170,7 @@ fun App(
                                 style = MaterialTheme.typography.bodyMedium
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
                                 text = stringResource(R.string.firstLaunchQuickStartTitle),
@@ -162,7 +178,7 @@ fun App(
                                 fontWeight = FontWeight.Bold
                             )
 
-                            // Step 1
+                            // Step 1: Install PC Server
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
@@ -182,7 +198,7 @@ fun App(
                                 }
                             }
 
-                            // Step 2
+                            // Step 2: Connect
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
@@ -196,17 +212,13 @@ fun App(
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
-                                        text = stringResource(R.string.firstLaunchStep2WifiDesc),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.firstLaunchStep2UsbDesc),
+                                        text = stringResource(R.string.firstLaunchStep2Desc),
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                             }
 
-                            // Step 3
+                            // Step 3: Start
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
@@ -225,40 +237,13 @@ fun App(
                                     )
                                 }
                             }
-
-                            // Step 4
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = stringResource(R.string.firstLaunchStep4Title),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.firstLaunchStep4Desc),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
                         }
                     },
                     confirmButton = {
-                        Row {
-                            TextButton(onClick = {
-                                openUrl("https://www.bilibili.com/video/BV1MpNKz8ELw")
-                            }) {
-                                Text(stringResource(R.string.firstLaunchVideoGuide))
-                            }
-                            TextButton(onClick = {
-                                openUrl("https://github.com/LanRhyme/MicYou/blob/master/docs/FAQ.md")
-                            }) {
-                                Text(stringResource(R.string.firstLaunchTextGuide))
-                            }
+                        TextButton(onClick = {
+                            openUrl("https://github.com/LanRhyme/MicYou")
+                        }) {
+                            Text(stringResource(R.string.firstLaunchDownloadPc))
                         }
                     },
                     dismissButton = {
@@ -274,6 +259,7 @@ fun App(
             // Permission Dialog (Android)
             if (showPermissionDialog && currentPermissions.isNotEmpty()) {
                 PermissionDialog(
+                    activity = activity,
                     permissions = currentPermissions,
                     onDismiss = onPermissionDialogDismiss,
                     onRequestPermissions = onRequestPermissions

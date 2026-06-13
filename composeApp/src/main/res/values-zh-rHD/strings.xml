@@ -22,20 +22,7 @@
     <string name="backgroundBlurLabel">模糊</string>
     <string name="backgroundBrightnessLabel">明度</string>
     <string name="backgroundSettingsLabel">背景</string>
-    <string name="bitrateLabel">位元传输率</string>
-    <string name="blackHoleConfigHint">黑洞 已安装，请在系统设置里面配置</string>
-    <string name="blackHoleFallback">找不到 黑洞，回退到默认设备物件</string>
-    <string name="blackHoleInitFailed">初始化 黑洞 失败了啊</string>
-    <string name="blackHoleInstallHint">安装指南: existential.audio/blackhole/</string>
-    <string name="blackHoleInstalled">黑洞 已经安装了，请在系统设置中去配置</string>
-    <string name="blackHoleNotFound">找不到 黑洞 虚拟输入设备物件</string>
-    <string name="blackHoleNotInstalled">请手动安装 黑洞 虚拟音频驱动器件</string>
-    <string name="blackHoleRestored">恢复到原始设备物件</string>
-    <string name="blackHoleSwitchFailed">切换到 黑洞 失败了啊</string>
-    <string name="blackHoleSwitchSuccess">成功地切换到 黑洞里</string>
-    <string name="blackHoleTrying">苹果系统: 尝试去使用 黑洞 虚拟设备物</string>
-    <string name="blackHoleUsingDevice">使用 黑洞 设备物件: %s</string>
-    <string name="cancel">取消</string>
+    <string name="bitrateLabel">位元传输率</string><string name="cancel">取消</string>
     <string name="cardOpacityLabel">卡片透明度</string>
     <string name="channelCountLabel">通道数量值</string>
     <string name="checkUpdate">检查更新项目</string>
@@ -79,8 +66,6 @@
     <string name="enableVadLabel">启用声音活动检测项</string>
     <string name="errorAdbCommandFailedMessage">安卓调试桥接指令执行失败。请确保已安装安卓调试桥接且已启用通用串行总线式侦错。</string>
     <string name="errorAdbCommandFailedTitle">安卓调试桥接指令失败项目</string>
-    <string name="errorAdminPrivilegeMessage">此操作需要管理者特权。请以管理者身份重新启动应用程式。</string>
-    <string name="errorAdminPrivilegeTitle">需要管理者特权项目</string>
     <string name="errorAudioDeviceMessage">音讯装置错误。请检查音讯装置设定并重新启动应用程式。</string>
     <string name="errorAudioDeviceTitle">音讯装置错误项目</string>
     <string name="errorAudioFormatMessage">不支援的音讯格式。请尝试不同的音讯设定或使用自动设定。</string>
@@ -94,9 +79,6 @@
     <string name="errorDialogHelp">去查看帮助文档</string>
     <string name="errorDialogRetry">再去试一次</string>
     <string name="errorDialogTitle">连接错误项目标题项</string>
-    <string name="errorFirewallBlockedMessage">港口 %s 被窗户防火墙阻挡。请新增防火墙规则或以管理者身份执行应用程式。</string>
-    <string name="errorFirewallBlockedTitle">防火墙阻挡项目</string>
-    <string name="errorUdpPortBlockedMessage">UDP 音讯港口 %d 被防火墙阻挡。音讯传输需要 TCP 和 UDP 港口均可存取。请为 UDP 港口新增防火墙规则，或以管理者身份执行应用程式。</string>
     <string name="errorUdpPortBlockedTitle">UDP 港口被阻挡</string>
     <string name="errorHandshakeFailedMessage">与目标装置握手失败。这可能表示版本不匹配或通讯协定错误。</string>
     <string name="errorHandshakeFailedTitle">握手失败项目</string>
@@ -104,23 +86,20 @@
     <string name="errorNetworkTimeoutTitle">网络连线超时项目</string>
     <string name="errorNetworkUnreachableMessage">无法到达互联网协议位址：%s。请验证互联网协议位址并确保两台装置在同一网络中。</string>
     <string name="errorNetworkUnreachableTitle">网络无法到达项目</string>
-    <string name="errorPermissionDeniedMessage">权限不足以执行此操作。请以管理者身份执行应用程式。</string>
+    <string name="errorPermissionDeniedMessage">权限不足，无法执行此操作。请检查系统设定中的应用程式权限项。</string>
     <string name="errorPermissionDeniedTitle">权限被拒绝项目</string>
     <string name="errorPortInUseMessage">港口 %s 已被其他应用程式占用。请选择其他港口或关闭占用该港口的应用程式。</string>
     <string name="errorPortInUseTitle">港口被占用项目</string>
     <string name="errorProtocolErrorMessage">通讯过程中发生通讯协定错误。请重新启动两端应用程式。</string>
-    <string name="errorProtocolErrorTitle">通讯协定错误项目</string>
-    <string name="errorSuggestionAddFirewallRule">• 允许麦克风你通过窗户防火墙</string>
-    <string name="errorSuggestionChangeAudioConfig">• 尝试不同的音讯设定</string>
+    <string name="errorProtocolErrorTitle">通讯协定错误项目</string><string name="errorSuggestionChangeAudioConfig">• 尝试不同的音讯设定</string>
     <string name="errorSuggestionChangePort">• 在设定中变更港口</string>
     <string name="errorSuggestionCheckAdbInstalled">• 确保电脑上已安装安卓调试桥接</string>
-    <string name="errorSuggestionCheckAntivirus">• 检查防毒或安全软体设定</string>
     <string name="errorSuggestionCheckAudioDevice">• 检查音讯装置权限和可用性</string>
     <string name="errorSuggestionCheckLogs">• 检视应用程式日志以取得详细错误资讯</string>
     <string name="errorSuggestionCheckNetwork">• 检查无线保真度或网络连线</string>
     <string name="errorSuggestionCheckNetworkConnection">• 验证装置间的网络连线</string>
     <string name="errorSuggestionCheckOtherApps">• 检查是否有其他应用程式占用此港口</string>
-    <string name="errorSuggestionCheckServerConfig">• 检查伺服器设定（港口、防火墙设定）</string>
+    <string name="errorSuggestionCheckServerConfig">• 检查伺服器设定（港口）</string>
     <string name="errorSuggestionCheckServerRunning">• 验证桌面伺服器正在执行且就绪</string>
     <string name="errorSuggestionCheckTargetRunning">• 确保目标装置正在执行麦克风你伺服器</string>
     <string name="errorSuggestionCheckUsbCable">• 检查通用串行总线式缆线连线</string>
@@ -130,7 +109,6 @@
     <string name="errorSuggestionRestartApp">• 重新启动应用程式</string>
     <string name="errorSuggestionRunAdbCommand">• 在电脑上执行此指令：%s</string>
     <string name="errorSuggestionRunAdbManually">• 手动执行：%s</string>
-    <string name="errorSuggestionRunAsAdmin">• 以管理者身份执行应用程式</string>
     <string name="errorSuggestionTryDifferentPort">• 尝试使用不同的港口</string>
     <string name="errorSuggestionUpdateApp">• 更新到最新版本</string>
     <string name="errorSuggestionUseDefaultConfig">• 使用预设或自动设定</string>
@@ -145,31 +123,20 @@
     <string name="errorVersionMismatchTitle">版本不匹配项目</string>
     <string name="exportLog">出口日志记录项目</string>
     <string name="exportLogDesc">出口应用日志记录为了调试用</string>
-    <string name="expressiveStyleLabel">表达性样式项目项</string>
-    <string name="firewallConfirm">尝试去添加规则吧</string>
-    <string name="firewallDismiss">忽略掉吧</string>
-    <string name="firewallMessage">端口 %s 不被 窗户 防火墙允许。 这可能阻止安卓设备通过 无线保真度 连接。\n\n你想尝试为这个端口添加防火墙规则吗？(需要管理者权限)</string>
-    <string name="firewallTitle">防火墙检查标题项</string>
-    <string name="udpWarningTitle">UDP 音讯警告</string>
-    <string name="udpWarningMessage">TCP 连线已建立，但未收到任何 UDP 音讯封包。音讯传输需要 TCP 和 UDP 港口均可存取。\n\n请检查：\n• 确保 UDP 港口 %1$d 已在防火墙中放行（TCP 港口 %2$d + 1）\n• 两台装置应在同一网路中\n• 尝试重新连线</string>
+    <string name="expressiveStyleLabel">表达性样式项目项</string><string name="udpWarningTitle">UDP 音讯警告</string>
+    <string name="udpWarningMessage">TCP 连线已建立，但未收到任何 UDP 音讯封包。音讯传输需要 TCP 和 UDP 港口均可存取。\n\n请检查：\n• 两台装置应在同一网路中\n• 尝试重新连线</string>
     <string name="udpWarningConfirm">确定</string>
     <string name="firstLaunchGotItButton">我知道怎么用项</string>
     <string name="firstLaunchGuideButton">让我看看使用指南</string>
     <string name="firstLaunchMessage">您似乎是第一次使用麦克风你。本应用可以将您的安卓设备通过无线保真度、蓝色牙齿或者通用串行总线式变成电脑的高质量微型电话。</string>
     <string name="firstLaunchQuickStartTitle">快速入门指南标题项</string>
-    <string name="firstLaunchStep1Desc">在电脑上下载并安装麦克风你桌面应用程序项</string>
-    <string name="firstLaunchStep1Title">1. 安装桌面应用程序项</string>
-    <string name="firstLaunchStep2Title">2. 连接设备项</string>
-    <string name="firstLaunchStep2UsbDesc">通用串行总线式: 通过通用串行总线式线缆连接并执行安卓调试桥接指令项</string>
-    <string name="firstLaunchStep2WifiDesc">无线保真度: 在应用程序中输入电脑互联网协议地址项</string>
-    <string name="firstLaunchStep3Desc">点击开始按钮启动音频传输项</string>
-    <string name="firstLaunchStep3Title">3. 开始传输项</string>
-    <string name="firstLaunchStep4Desc">在录音软件中选择VB-电缆作为输入设备项</string>
-    <string name="firstLaunchStep4DescMac">在录音软件中选择黑洞作为输入设备项</string>
-    <string name="firstLaunchStep4Title">4. 配置音频项</string>
-    <string name="firstLaunchTextGuide">文字教程项</string>
+    <string name="firstLaunchStep1Desc">在电脑终端下载并安装 MicYou 桌面版本项</string>
+    <string name="firstLaunchStep1Title">1. 安装电脑终端项</string>
+    <string name="firstLaunchStep2Title">2. 连接设备物件</string>
+    <string name="firstLaunchStep2Desc">Wi-Fi: 输入电脑 IP 地址\nUSB: 使用 ADB 端口转发</string>
+    <string name="firstLaunchStep3Desc">点击开始按钮项，将手机音频发送到电脑终端</string>
+    <string name="firstLaunchStep3Title">3. 开始传输数据</string>
     <string name="firstLaunchTitle">欢迎使用麦克风你</string>
-    <string name="firstLaunchVideoGuide">视频教程项</string>
     <string name="floatingWindowDesc">显示一个带有音频可视化的小型置顶窗口</string>
     <string name="floatingWindowLabel">悬浮窗</string>
     <string name="gainLabel">增益</string>
@@ -299,11 +266,7 @@
     <string name="themeDark">暗式</string>
     <string name="themeLabel">主题标签项</string>
     <string name="themeLight">光亮式</string>
-    <string name="themeSystem">系统式</string>
-    <string name="trayExit">出口程序项</string>
-    <string name="trayHide">隐藏应用程序项</string>
-    <string name="trayShow">展示应用程序项</string>
-    <string name="unmuteLabel">不静音</string>
+    <string name="themeSystem">系统式</string><string name="unmuteLabel">不静音</string>
     <string name="updateCheckFailed">检查更新失败: %s</string>
     <string name="updateDownloadFailed">下载失败了: %s</string>
     <string name="updateDownloading">下载更新之中...</string>
@@ -333,14 +296,7 @@
     <string name="useExpressiveShapesLabel">表达性形状项目项</string>
     <string name="useSystemTitleBarDesc">使用系统原生窗口装饰替代自定义标题栏</string>
     <string name="useSystemTitleBarLabel">系统标题栏</string>
-    <string name="vadThresholdLabel">敏感阈值数值</string>
-    <string name="vbcableInstall">安装 VB-电缆</string>
-    <string name="vbcableInstalled">已经安装了</string>
-    <string name="vbcableInstalling">正在安装 VB-电缆...</string>
-    <string name="vbcableNeedsAdmin">需要管理者权限，请以管理者身份运行应用程序</string>
-    <string name="vbcableNotInstalled">没有安装</string>
-    <string name="vbcableSettingsLabel">VB-电缆 驱动器件项</string>
-    <string name="versionLabel">版本号码值</string>
+    <string name="vadThresholdLabel">敏感阈值数值</string><string name="versionLabel">版本号码值</string>
     <string name="viewLibraries">观看打开来源库们</string>
     <string name="visualizerStyleBars">频谱柱</string>
     <string name="visualizerStyleGlow">光晕</string>
@@ -349,13 +305,7 @@
     <string name="visualizerStyleRipple">波纹</string>
     <string name="visualizerStyleVolumeRing">音量环</string>
     <string name="visualizerStyleWave">波浪</string>
-    <string name="waitAdb">等待为了安卓调试桥接联系...</string>
-    <string name="vbcableDetectTitle">VB-Cable Driver Required</string>
-    <string name="vbcableDetectMessage">VB-Cable driver is required for MicYou to function as a virtual microphone on Windows. Would you like to install it automatically?</string>
-    <string name="vbcableAutoInstall">Install Automatically</string>
-    <string name="vbcableManualDownload">Manual Download</string>
-    <string name="vbcableSkip">Skip for Now</string>
-    <string name="contributorsCount">%s contributors</string>
+    <string name="waitAdb">等待为了安卓调试桥接联系...</string><string name="contributorsCount">%s contributors</string>
     <string name="updateAvailableMsg">New version available: %s</string>
     <string name="installInstalling">Installing...</string>
     <string name="reloadPlugins">Reload Plugins</string>
@@ -374,7 +324,7 @@
     <string name="connectionDisconnected">连接意外关闭了：远程设备断开了连接。</string>
     <string name="connectionError">连接错误: %s</string>
     <string name="connectionPipeBroken">管道中断了：无法向已关闭的连接发送数据。</string>
-    <string name="connectionRejected">连接被拒绝了: 请确保电脑端已开启并处于连接中状态，且防火墙已放行 TCP %d 端口。</string>
+    <string name="connectionRejected">连接被拒绝了: 请确保电脑端已开启并处于连接中状态，且电脑端已开启并等待连接。</string>
     <string name="connectionReset">连接被重置了：远程设备强制关闭了连接。</string>
     <string name="connectionSocketClosed">套接字已关闭了呀。</string>
     <string name="connectionTimeout">连接超时了: 请检查网络连接或 IP 地址是否正确。</string>
@@ -389,28 +339,16 @@
     <string name="errorSocketError">套接字错误: %s</string>
     <string name="pluginConfiguration">插件配置</string>
     <string name="pluginNotSupportedAndroid">Android 平台不支持插件。</string>
-    <string name="pluginSettingsTitle">插件设置</string>
-    <string name="vbcableAdminRequired">需要管理员权限，请批准 UAC 提示。</string>
-    <string name="vbcableInstallTimeout">安装超时了，请重试。</string>
-    <string name="vbcableWaitingDevice">等待设备初始化...</string>
-    <string name="installCheckingLinux">正在检查 Linux 音频子系统...</string>
+    <string name="pluginSettingsTitle">插件设置</string><string name="installCheckingLinux">正在检查 Linux 音频子系统...</string>
     <string name="installCheckingPackage">正在检查安装包...</string>
     <string name="installConfigComplete">配置完成了呀</string>
-    <string name="installConfiguring">正在配置...</string>
-    <string name="installCreatingDevice">正在创建虚拟音频设备...</string>
-    <string name="installDeviceCreated">虚拟音频设备已创建</string>
-    <string name="installDeviceFailed">创建虚拟音频设备失败了啊</string>
-    <string name="installDownloadFailed">下载失败了</string>
+    <string name="installConfiguring">正在配置...</string><string name="installDownloadFailed">下载失败了</string>
     <string name="installDownloading">正在下载...</string>
     <string name="installError">安装错误: %s</string>
     <string name="installLinuxExists">PipeWire 虚拟设备已存在</string>
     <string name="installNotCompleted">安装未完成</string>
     <string name="installOsNotSupported">当前操作系统不支持自动安装</string>
-    <string name="reloadingPlugins">正在重新加载插件...</string>
-    <string name="vbcableInstallFailed">VB-Cable 安装失败了: %s</string>
-    <string name="vbcableToolMissing">未找到 SoundVolumeView.exe，无法配置 VB-Cable 设备</string>
-    <string name="vbcableConfigPartial">VB-Cable 已安装但配置不完整: %s，声音输出可能无法正常工作</string>
-    <string name="webQrCodeTitle">扫码连接标题项</string>
+    <string name="reloadingPlugins">正在重新加载插件...</string><string name="webQrCodeTitle">扫码连接标题项</string>
     <string name="webScanHint">用手机扫码打开网页项目，允许麦克风权限项目即可开始传输音频项目</string>
     <string name="webClientCountLabel">已连接客户端计数标签项</string>
     <string name="modeWeb">网页式</string>
@@ -465,4 +403,6 @@
     <string name="ipAllInterfaces">全部</string>
     <string name="ipAllInterfacesDesc">监听所有网络接口</string>
     <string name="errorIpChangeRestartFailed">IP 切换后重新连接失败: %s</string>
+    <string name="firstLaunchDownloadPc">下载电脑终端项</string>
+    <string name="errorSuggestionCheckSettings">检查系统设定中的应用程式权限项</string>
 </resources>

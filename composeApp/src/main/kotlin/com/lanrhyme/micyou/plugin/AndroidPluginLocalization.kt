@@ -1,9 +1,10 @@
 package com.lanrhyme.micyou.plugin
 
-import com.lanrhyme.micyou.Logger
+import com.lanrhyme.micyou.util.Logger
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import com.lanrhyme.micyou.util.getString
 class AndroidPluginLocalization(
     private val pluginId: String,
     private val pluginDir: File,

@@ -35,7 +35,7 @@
             android:exported="false" />
 
         <service
-            android:name=".MicYouTileService"
+            android:name=".service.MicYouTileService"
             android:label="@string/qs_tile_label"
             android:icon="@drawable/ic_qs_mic"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"

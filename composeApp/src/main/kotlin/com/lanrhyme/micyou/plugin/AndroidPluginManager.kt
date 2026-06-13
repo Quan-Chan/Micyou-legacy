@@ -2,8 +2,8 @@ package com.lanrhyme.micyou.plugin
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.lanrhyme.micyou.ContextHelper
-import com.lanrhyme.micyou.Logger
+import com.lanrhyme.micyou.util.ContextHelper
+import com.lanrhyme.micyou.util.Logger
 import dalvik.system.DexClassLoader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

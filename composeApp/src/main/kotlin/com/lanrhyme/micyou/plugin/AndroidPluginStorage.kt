@@ -2,9 +2,10 @@ package com.lanrhyme.micyou.plugin
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.lanrhyme.micyou.ContextHelper
-import com.lanrhyme.micyou.Logger
+import com.lanrhyme.micyou.util.ContextHelper
+import com.lanrhyme.micyou.util.Logger
 import java.io.File
+import com.lanrhyme.micyou.util.getString
 class AndroidPluginStorage(
     override val pluginId: String,
     private val dataDir: File,

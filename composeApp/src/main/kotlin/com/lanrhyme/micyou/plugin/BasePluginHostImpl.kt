@@ -1,7 +1,15 @@
 package com.lanrhyme.micyou.plugin
 
-import com.lanrhyme.micyou.AudioEngine
-import com.lanrhyme.micyou.Settings
+import com.lanrhyme.micyou.audio.AudioEngine
+import com.lanrhyme.micyou.audio.AudioFormat as AppAudioFormat
+import com.lanrhyme.micyou.audio.ChannelCount as AppChannelCount
+import com.lanrhyme.micyou.audio.SampleRate as AppSampleRate
+import com.lanrhyme.micyou.settings.Settings
+import com.lanrhyme.micyou.audio.EqualizerConfig as AppEqualizerConfig
+import com.lanrhyme.micyou.viewmodel.ConnectionMode as AppConnectionMode
+import com.lanrhyme.micyou.viewmodel.NoiseReductionType as AppNoiseReductionType
+import com.lanrhyme.micyou.viewmodel.StreamState as AppStreamState
+import com.lanrhyme.micyou.viewmodel.TransportProtocol as AppTransportProtocol
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,10 +41,10 @@ abstract class BasePluginHostImpl(
         scope.launch {
             audioEngine.streamState.collect { state ->
                 _streamState.value = when (state) {
-                    com.lanrhyme.micyou.StreamState.Idle -> StreamState.Idle
-                    com.lanrhyme.micyou.StreamState.Connecting -> StreamState.Connecting
-                    com.lanrhyme.micyou.StreamState.Streaming -> StreamState.Streaming
-                    com.lanrhyme.micyou.StreamState.Error -> StreamState.Error
+                    AppStreamState.Idle -> StreamState.Idle
+                    AppStreamState.Connecting -> StreamState.Connecting
+                    AppStreamState.Streaming -> StreamState.Streaming
+                    AppStreamState.Error -> StreamState.Error
                 }
             }
         }
@@ -70,7 +78,7 @@ abstract class BasePluginHostImpl(
             dereverbLevel = config.dereverbLevel,
             amplification = config.amplification,
             processingChain = emptyList(),
-            equalizerConfig = com.lanrhyme.micyou.EqualizerConfig()
+            equalizerConfig = AppEqualizerConfig()
         )
     }
 
@@ -85,10 +93,10 @@ abstract class BasePluginHostImpl(
             port = port,
             mode = mapConnectionMode(mode),
             isClient = isClient,
-            sampleRate = com.lanrhyme.micyou.SampleRate.Rate44100,
-            channelCount = com.lanrhyme.micyou.ChannelCount.Mono,
-            audioFormat = com.lanrhyme.micyou.AudioFormat.PCM_16BIT,
-            transportProtocol = com.lanrhyme.micyou.TransportProtocol.Tcp
+            sampleRate = AppSampleRate.Rate44100,
+            channelCount = AppChannelCount.Mono,
+            audioFormat = AppAudioFormat.PCM_16BIT,
+            transportProtocol = AppTransportProtocol.Tcp
         )
     }
 
@@ -192,19 +200,19 @@ abstract class BasePluginHostImpl(
         settings.putFloat(key, value)
 
     // 辅助映射方法
-    protected fun mapNsType(type: NoiseReductionType): com.lanrhyme.micyou.NoiseReductionType {
+    protected fun mapNsType(type: NoiseReductionType): AppNoiseReductionType {
         return when (type) {
-            NoiseReductionType.Ulunas -> com.lanrhyme.micyou.NoiseReductionType.Ulunas
-            NoiseReductionType.RNNoise -> com.lanrhyme.micyou.NoiseReductionType.RNNoise
-            NoiseReductionType.Speexdsp -> com.lanrhyme.micyou.NoiseReductionType.Speexdsp
-            NoiseReductionType.None -> com.lanrhyme.micyou.NoiseReductionType.None
+            NoiseReductionType.Ulunas -> AppNoiseReductionType.Ulunas
+            NoiseReductionType.RNNoise -> AppNoiseReductionType.RNNoise
+            NoiseReductionType.Speexdsp -> AppNoiseReductionType.Speexdsp
+            NoiseReductionType.None -> AppNoiseReductionType.None
         }
     }
 
-    protected fun mapConnectionMode(mode: ConnectionMode): com.lanrhyme.micyou.ConnectionMode {
+    protected fun mapConnectionMode(mode: ConnectionMode): AppConnectionMode {
         return when (mode) {
-            ConnectionMode.Wifi -> com.lanrhyme.micyou.ConnectionMode.Wifi
-            ConnectionMode.Usb -> com.lanrhyme.micyou.ConnectionMode.Usb
+            ConnectionMode.Wifi -> AppConnectionMode.Wifi
+            ConnectionMode.Usb -> AppConnectionMode.Usb
         }
     }
 }

@@ -1,4 +1,5 @@
 package com.lanrhyme.micyou
+import com.lanrhyme.micyou.R
 
 import android.Manifest
 import android.content.Intent
@@ -25,6 +26,18 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
+import com.lanrhyme.micyou.settings.Settings
+import com.lanrhyme.micyou.theme.isDarkThemeActive
+import com.lanrhyme.micyou.theme.ThemeMode
+import com.lanrhyme.micyou.util.AppLanguage
+import com.lanrhyme.micyou.util.ContextHelper
+import com.lanrhyme.micyou.util.Logger
+import com.lanrhyme.micyou.util.PermissionState
+import com.lanrhyme.micyou.ui.dialog.getRequiredPermissions
+import com.lanrhyme.micyou.ui.dialog.hasAllRequiredPermissions
+import com.lanrhyme.micyou.util.setAppLocale
+import com.lanrhyme.micyou.viewmodel.MainViewModel
+import com.lanrhyme.micyou.viewmodel.StreamState
 
 class MainActivity : ComponentActivity() {
 
@@ -93,7 +106,7 @@ class MainActivity : ComponentActivity() {
         }
         setAppLocale(savedLanguage)
 
-        Logger.init(AndroidLogger(this))
+        Logger.init(this)
         Logger.i("MainActivity", "App started")
 
         FileKit.init(this)
@@ -189,6 +202,7 @@ class MainActivity : ComponentActivity() {
 
             App(
                 viewModel = appViewModel,
+                activity = this@MainActivity,
                 showPermissionDialog = showPermissionDialog,
                 currentPermissions = currentPermissions,
                 onRequestPermissions = { perms ->

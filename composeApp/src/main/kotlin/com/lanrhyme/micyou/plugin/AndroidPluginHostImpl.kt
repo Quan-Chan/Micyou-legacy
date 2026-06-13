@@ -1,9 +1,9 @@
 package com.lanrhyme.micyou.plugin
 
 import android.os.Build
-import com.lanrhyme.micyou.AudioEngine
-import com.lanrhyme.micyou.Settings
-import com.lanrhyme.micyou.SettingsFactory
+import com.lanrhyme.micyou.audio.AudioEngine
+import com.lanrhyme.micyou.settings.Settings
+import com.lanrhyme.micyou.settings.SettingsFactory
 
 /**
  * Android PluginHost 实现。

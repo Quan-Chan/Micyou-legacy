@@ -29,20 +29,7 @@
     <string name="backgroundBlurLabel">Blur</string>
     <string name="backgroundBrightnessLabel">Brightness</string>
     <string name="backgroundSettingsLabel">Background</string>
-    <string name="bitrateLabel">Bitrate</string>
-    <string name="blackHoleConfigHint">BlackHole installed, please configure in System Settings</string>
-    <string name="blackHoleFallback">BlackHole not found, falling back to default device</string>
-    <string name="blackHoleInitFailed">Failed to initialize BlackHole</string>
-    <string name="blackHoleInstallHint">Installation guide: existential.audio/blackhole/</string>
-    <string name="blackHoleInstalled">BlackHole is installed, please configure in System Settings</string>
-    <string name="blackHoleNotFound">Cannot find BlackHole virtual input device</string>
-    <string name="blackHoleNotInstalled">Please install BlackHole virtual audio driver manually</string>
-    <string name="blackHoleRestored">Restored to original device</string>
-    <string name="blackHoleSwitchFailed">Failed to switch to BlackHole</string>
-    <string name="blackHoleSwitchSuccess">Successfully switched to BlackHole</string>
-    <string name="blackHoleTrying">macOS: Trying to use BlackHole virtual device</string>
-    <string name="blackHoleUsingDevice">Using BlackHole device: %s</string>
-    <string name="cancel">Cancel</string>
+    <string name="bitrateLabel">Bitrate</string><string name="cancel">Cancel</string>
     <string name="cardOpacityLabel">Card Opacity</string>
     <string name="channelCountLabel">Channels</string>
     <string name="checkUpdate">Check for Updates</string>
@@ -67,7 +54,7 @@
     <string name="connectionModeLabel">Connection Mode</string>
     <string name="transportProtocolLabel">Protocol</string>
     <string name="connectionPipeBroken">Pipe broken: cannot send data to a closed connection.</string>
-    <string name="connectionRejected">Connection refused: please ensure the desktop server is running and the firewall has allowed TCP port %d.</string>
+    <string name="connectionRejected">Connection refused: please ensure the desktop server is running</string>
     <string name="connectionReset">Connection reset: remote device forcibly closed the connection.</string>
     <string name="connectionSocketClosed">Socket closed.</string>
     <string name="connectionTimeout">Connection timed out: please check your network connection or IP address.</string>
@@ -99,8 +86,6 @@
     <string name="errorAudioFormatNotSupported">Audio format not supported: device does not support %1$s (%2$s) format or current sample rate %3$dHz</string>
     <string name="errorAudioRecordInitFailed">AudioRecord initialization failed</string>
     <string name="errorAdbCommandFailedTitle">ADB Command Failed</string>
-    <string name="errorAdminPrivilegeMessage">This operation requires administrator privileges. Please restart the application as administrator.</string>
-    <string name="errorAdminPrivilegeTitle">Administrator Privilege Required</string>
     <string name="errorAudioDeviceMessage">Audio device error. Please check your audio device settings and restart the application.</string>
     <string name="errorAudioDeviceTitle">Audio Device Error</string>
     <string name="errorAudioFormatMessage">Unsupported audio format. Please try different audio settings or use auto-configuration.</string>
@@ -113,10 +98,7 @@
     <string name="errorDialogDismiss">Dismiss</string>
     <string name="errorDialogHelp">View Help</string>
     <string name="errorDialogRetry">Retry</string>
-    <string name="errorDialogTitle">Connection Error</string>
-    <string name="errorFirewallBlockedMessage">Port %s is blocked by Windows Firewall. Please add a firewall rule or run the application as administrator.</string>
-    <string name="errorFirewallBlockedTitle">Firewall Blocked</string>
-    <string name="errorUdpPortBlockedMessage">UDP audio port %d is blocked by firewall. Audio transmission requires both TCP and UDP ports to be accessible. Please add a firewall rule for the UDP port or run the application as administrator.</string>
+    <string name="errorDialogTitle">Connection Error</string><string name="errorUdpPortBlockedMessage">UDP audio port %d is blocked.</string>
     <string name="errorUdpPortBlockedTitle">UDP Port Blocked</string>
     <string name="errorHandshakeFailedMessage">Handshake failed with the target device. This may indicate a version mismatch or protocol error.</string>
     <string name="errorHandshakeFailedDetailed">Handshake failed: verification with the target device failed. This may be due to a version mismatch or protocol error. Please ensure both devices are using the same version of MicYou.</string>
@@ -125,24 +107,21 @@
     <string name="errorNetworkTimeoutTitle">Connection Timeout</string>
     <string name="errorNetworkUnreachableMessage">Cannot reach IP address: %s. Please verify the IP address and ensure both devices are on the same network.</string>
     <string name="errorNetworkUnreachableTitle">Network Unreachable</string>
-    <string name="errorPermissionDeniedMessage">Insufficient permissions to perform this operation. Please run the application as administrator.</string>
+    <string name="errorPermissionDeniedMessage">Insufficient permissions to perform this operation. Please check app permissions in system settings.</string>
     <string name="errorRecordingPermissionDenied">Recording permission denied</string>
     <string name="errorPermissionDeniedTitle">Permission Denied</string>
     <string name="errorPortInUseMessage">Port %s is already in use by another application. Please choose a different port or close the conflicting application.</string>
     <string name="errorPortInUseTitle">Port Already in Use</string>
     <string name="errorProtocolErrorMessage">A protocol error occurred during communication. Please restart both applications.</string>
-    <string name="errorProtocolErrorTitle">Protocol Error</string>
-    <string name="errorSuggestionAddFirewallRule">• Allow MicYou through Windows Firewall</string>
-    <string name="errorSuggestionChangeAudioConfig">• Try different audio configuration settings</string>
+    <string name="errorProtocolErrorTitle">Protocol Error</string><string name="errorSuggestionChangeAudioConfig">• Try different audio configuration settings</string>
     <string name="errorSuggestionChangePort">• Change the port number in settings</string>
     <string name="errorSuggestionCheckAdbInstalled">• Ensure ADB is installed on your computer</string>
-    <string name="errorSuggestionCheckAntivirus">• Check antivirus or security software settings</string>
     <string name="errorSuggestionCheckAudioDevice">• Check audio device permissions and availability</string>
     <string name="errorSuggestionCheckLogs">• Check application logs for detailed error information</string>
     <string name="errorSuggestionCheckNetwork">• Check your Wi-Fi or network connection</string>
     <string name="errorSuggestionCheckNetworkConnection">• Verify network connection between devices</string>
     <string name="errorSuggestionCheckOtherApps">• Check if other applications are using this port</string>
-    <string name="errorSuggestionCheckServerConfig">• Check server configuration (port, firewall settings)</string>
+    <string name="errorSuggestionCheckServerConfig">• Check server configuration (port)</string>
     <string name="errorSuggestionCheckServerRunning">• Verify the desktop server is running and ready</string>
     <string name="errorSuggestionCheckTargetRunning">• Ensure the target device is running MicYou server</string>
     <string name="errorSuggestionCheckUsbCable">• Check USB cable connection</string>
@@ -152,7 +131,6 @@
     <string name="errorSuggestionRestartApp">• Restart the application</string>
     <string name="errorSuggestionRunAdbCommand">• Run this command on PC: %s</string>
     <string name="errorSuggestionRunAdbManually">• Manually run: %s</string>
-    <string name="errorSuggestionRunAsAdmin">• Run the application as administrator</string>
     <string name="errorSuggestionTryDifferentPort">• Try using a different port number</string>
     <string name="errorSuggestionUpdateApp">• Update to the latest version</string>
     <string name="errorSuggestionUseDefaultConfig">• Use default or auto configuration</string>
@@ -170,31 +148,20 @@
     <string name="errorVersionMismatchTitle">Version Mismatch</string>
     <string name="exportLog">Export Log</string>
     <string name="exportLogDesc">Export application logs for debugging</string>
-    <string name="expressiveStyleLabel">Expressive Style</string>
-    <string name="firewallConfirm">Try Add Rule</string>
-    <string name="firewallDismiss">Ignore</string>
-    <string name="firewallMessage">Port %s is not allowed by Windows Firewall. This may prevent Android devices from connecting via Wi-Fi.\n\nWould you like to try adding a firewall rule for this port? (Requires Administrator privileges)</string>
-    <string name="firewallTitle">Firewall Check</string>
-    <string name="udpWarningTitle">UDP Audio Warning</string>
-    <string name="udpWarningMessage">TCP connection is established, but no UDP audio packets have been received. Audio transmission requires both TCP and UDP ports to be accessible.\n\nPlease check:\n• Ensure UDP port %1$d is allowed in your firewall (TCP port %2$d + 1)\n• Both devices should be on the same network\n• Try restarting the connection</string>
+    <string name="expressiveStyleLabel">Expressive Style</string><string name="udpWarningTitle">UDP Audio Warning</string>
+    <string name="udpWarningMessage">TCP connection is established, but no UDP audio packets have been received. Audio transmission requires both TCP and UDP ports to be accessible.\n\nPlease check:\n• Both devices should be on the same network\n• Try restarting the connection</string>
     <string name="udpWarningConfirm">OK</string>
     <string name="firstLaunchGotItButton">I know how to use it</string>
     <string name="firstLaunchGuideButton">View Usage Guide</string>
     <string name="firstLaunchMessage">You seem to be using MicYou for the first time. This app turns your Android device into a high-quality microphone for your computer via Wi-Fi or USB.</string>
     <string name="firstLaunchQuickStartTitle">Quick Start Guide</string>
-    <string name="firstLaunchStep1Desc">Download and install MicYou desktop app on your computer</string>
-    <string name="firstLaunchStep1Title">1. Install Desktop App</string>
-    <string name="firstLaunchStep2Title">2. Connect Devices</string>
-    <string name="firstLaunchStep2UsbDesc">USB: Connect via USB cable and run ADB command</string>
-    <string name="firstLaunchStep2WifiDesc">Wi-Fi: Enter computer IP address in the app</string>
-    <string name="firstLaunchStep3Desc">Click Start button to begin audio streaming</string>
+    <string name="firstLaunchStep1Desc">Download and install MicYou Desktop on your computer</string>
+    <string name="firstLaunchStep1Title">1. Install PC App</string>
+    <string name="firstLaunchStep2Title">2. Connect</string>
+    <string name="firstLaunchStep2Desc">Same Wi-Fi: Enter PC IP address\nUSB: Use ADB port forwarding</string>
+    <string name="firstLaunchStep3Desc">Tap Start to send phone audio to PC</string>
     <string name="firstLaunchStep3Title">3. Start Streaming</string>
-    <string name="firstLaunchStep4Desc">Select VB-Cable as input device in your recording software</string>
-    <string name="firstLaunchStep4DescMac">Select BlackHole as input device in your recording software</string>
-    <string name="firstLaunchStep4Title">4. Configure Audio</string>
-    <string name="firstLaunchTextGuide">Text Guide</string>
     <string name="firstLaunchTitle">Welcome to MicYou</string>
-    <string name="firstLaunchVideoGuide">Video Tutorial</string>
     <string name="floatingWindowDesc">Show a small always-on-top window with audio visualization</string>
     <string name="floatingWindowLabel">Floating Window</string>
     <string name="gainLabel">Gain</string>
@@ -206,11 +173,7 @@
     <string name="installCheckingLinux">Checking Linux audio subsystem...</string>
     <string name="installCheckingPackage">Checking package...</string>
     <string name="installConfigComplete">Configuration complete</string>
-    <string name="installConfiguring">Configuring...</string>
-    <string name="installCreatingDevice">Creating virtual audio device...</string>
-    <string name="installDeviceCreated">Virtual audio device created</string>
-    <string name="installDeviceFailed">Failed to create virtual audio device</string>
-    <string name="installDownloadFailed">Download failed</string>
+    <string name="installConfiguring">Configuring...</string><string name="installDownloadFailed">Download failed</string>
     <string name="installDownloading">Downloading...</string>
     <string name="installError">Installation error: %s</string>
     <string name="installLinuxExists">PipeWire virtual device already exists</string>
@@ -347,11 +310,7 @@
     <string name="themeDark">Dark</string>
     <string name="themeLabel">Theme Mode</string>
     <string name="themeLight">Light</string>
-    <string name="themeSystem">System</string>
-    <string name="trayExit">Exit</string>
-    <string name="trayHide">Hide App</string>
-    <string name="trayShow">Show App</string>
-    <string name="unmuteLabel">Unmute</string>
+    <string name="themeSystem">System</string><string name="unmuteLabel">Unmute</string>
     <string name="updateCheckFailed">Failed to check for updates: %s</string>
     <string name="updateDownloadFailed">Download failed: %s</string>
     <string name="updateDownloading">Downloading update...</string>
@@ -381,14 +340,7 @@
     <string name="useExpressiveShapesLabel">Expressive Shapes</string>
     <string name="useSystemTitleBarDesc">Use native system window decorations instead of custom title bar</string>
     <string name="useSystemTitleBarLabel">System Title Bar</string>
-    <string name="vadThresholdLabel">Sensitivity</string>
-    <string name="vbcableInstall">Install VB-Cable</string>
-    <string name="vbcableInstalled">Installed</string>
-    <string name="vbcableInstalling">Installing VB-Cable...</string>
-    <string name="vbcableNeedsAdmin">Administrator privileges required, please run the application as administrator</string>
-    <string name="vbcableNotInstalled">Not Installed</string>
-    <string name="vbcableSettingsLabel">VB-Cable Driver</string>
-    <string name="versionLabel">Version</string>
+    <string name="vadThresholdLabel">Sensitivity</string><string name="versionLabel">Version</string>
     <string name="viewLibraries">View Open Source Libraries</string>
     <string name="visualizerStyleBars">Bars</string>
     <string name="visualizerStyleGlow">Glow</string>
@@ -397,24 +349,11 @@
     <string name="visualizerStyleRipple">Ripple</string>
     <string name="visualizerStyleVolumeRing">Volume Ring</string>
     <string name="visualizerStyleWave">Wave</string>
-    <string name="waitAdb">Waiting for ADB connection...</string>
-    <string name="vbcableDetectTitle">VB-Cable Driver Required</string>
-    <string name="vbcableDetectMessage">VB-Cable driver is required for MicYou to function as a virtual microphone on Windows. Would you like to install it automatically?</string>
-    <string name="vbcableAdminRequired">Administrator privileges required. Please approve the UAC prompt.</string>
-    <string name="vbcableAutoInstall">Install Automatically</string>
-    <string name="vbcableInstallTimeout">Installation timed out. Please try again.</string>
-    <string name="vbcableWaitingDevice">Waiting for device initialization...</string>
-    <string name="vbcableManualDownload">Manual Download</string>
-    <string name="vbcableSkip">Skip for Now</string>
-    <string name="contributorsCount">%s contributors</string>
+    <string name="waitAdb">Waiting for ADB connection...</string><string name="contributorsCount">%s contributors</string>
     <string name="updateAvailableMsg">New version available: %s</string>
     <string name="installInstalling">Installing...</string>
     <string name="reloadPlugins">Reload Plugins</string>
-    <string name="reloadingPlugins">Reloading plugins...</string>
-    <string name="vbcableInstallFailed">VB-Cable installation failed: %s</string>
-    <string name="vbcableToolMissing">SoundVolumeView.exe not found. VB-Cable device configuration cannot proceed.</string>
-    <string name="vbcableConfigPartial">VB-Cable installed but configuration incomplete: %s. Sound output may not work correctly.</string>
-    <string name="noPluginsFound">No plugins installed</string>
+    <string name="reloadingPlugins">Reloading plugins...</string><string name="noPluginsFound">No plugins installed</string>
     <string name="showMore">Show More</string>
     <string name="showLess">Show Less</string>
     <string name="removePlugin">Delete Plugin</string>
@@ -473,4 +412,6 @@
     <string name="qs_toast_connected">Connected</string>
     <string name="qs_toast_failed">Connection failed</string>
     <string name="qs_toast_stopped">Streaming stopped</string>
+    <string name="firstLaunchDownloadPc">Download PC App</string>
+    <string name="errorSuggestionCheckSettings">Check app permissions in system settings</string>
 </resources>

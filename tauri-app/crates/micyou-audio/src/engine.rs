@@ -43,6 +43,13 @@ impl RubatoResampler {
             return input.to_vec();
         }
 
+        // Zero out only the unused part of the input buffer to avoid stale data
+        for frame in in_frames..self.chunk_size {
+            for ch in 0..channels {
+                self.input_buffer.write_sample(ch, frame, &0.0);
+            }
+        }
+
         // Fill the pre-allocated input buffer
         for (i, &sample) in input.iter().enumerate() {
             let frame = i / channels;
@@ -131,7 +138,7 @@ impl AudioOutputManager {
             }
             matched_device.or_else(|| host.default_output_device())
         } else {
-            // Auto-detect VB-CABLE on Windows if default
+            // Auto-detect virtual audio devices by platform
             #[cfg(target_os = "windows")]
             {
                 let mut cable_device = None;
@@ -147,7 +154,22 @@ impl AudioOutputManager {
                 }
                 cable_device.or_else(|| host.default_output_device())
             }
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(target_os = "macos")]
+            {
+                let mut blackhole_device = None;
+                if let Ok(devices) = host.output_devices() {
+                    for dev in devices {
+                        if let Ok(name) = dev.name() {
+                            if name.to_lowercase().contains("blackhole") {
+                                blackhole_device = Some(dev);
+                                break;
+                            }
+                        }
+                    }
+                }
+                blackhole_device.or_else(|| host.default_output_device())
+            }
+            #[cfg(not(any(target_os = "windows", target_os = "macos")))]
             {
                 host.default_output_device()
             }
@@ -165,9 +187,9 @@ impl AudioOutputManager {
             self.resampler = None;
         }
 
-        // Initialize a ring buffer for ~200ms of audio (reduced from 1s for lower latency)
-        let buffer_size = (self.device_sample_rate as usize * self.device_channels) / 5;
-        let ring_buffer = HeapRb::<f32>::new(buffer_size.max(4096));
+        // Initialize a ring buffer for ~400ms of audio
+        let buffer_size = (self.device_sample_rate as usize * self.device_channels * 2) / 5;
+        let ring_buffer = HeapRb::<f32>::new(buffer_size.max(8192));
         let (producer, mut consumer) = ring_buffer.split();
 
         self.producer = Some(producer);

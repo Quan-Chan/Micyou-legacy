@@ -43,6 +43,11 @@ const emit = defineEmits([
 const appWindow = getCurrentWindow();
 const moreMenuOpen = ref(false);
 
+const isMacOS = typeof navigator !== 'undefined' &&
+  /Mac/.test(navigator.platform || navigator.userAgent) &&
+  !/iPhone|iPad|iPod/.test(navigator.userAgent) &&
+  !(navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+
 const statusColor = computed(() => {
   switch (props.serverState) {
     case 'streaming': return 'bg-primary';
@@ -225,6 +230,16 @@ defineExpose({ closePopup });
 
 <template>
   <div class="w-full h-full flex items-center haze-surface rounded-2xl px-3 gap-2" data-tauri-drag-region>
+    <!-- Window Controls (macOS: left) -->
+    <template v-if="isMacOS">
+      <button @click="appWindow.minimize()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors flex-shrink-0">
+        <Minus class="w-3.5 h-3.5 text-on-surface" />
+      </button>
+      <button @click="appWindow.close()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-error/20 hover:text-error transition-colors flex-shrink-0">
+        <X class="w-3.5 h-3.5 text-on-surface" />
+      </button>
+    </template>
+
     <!-- Status Dot -->
     <div class="w-2 h-2 rounded-full flex-shrink-0 pointer-events-none" :class="statusColor" />
 
@@ -274,12 +289,14 @@ defineExpose({ closePopup });
       <MoreHorizontal class="w-4 h-4 text-on-surface-variant" />
     </button>
 
-    <!-- Window Controls -->
-    <button @click="appWindow.minimize()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors flex-shrink-0">
-      <Minus class="w-3.5 h-3.5 text-on-surface" />
-    </button>
-    <button @click="appWindow.close()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-error/20 hover:text-error transition-colors flex-shrink-0">
-      <X class="w-3.5 h-3.5 text-on-surface" />
-    </button>
+    <!-- Window Controls (non-macOS: right) -->
+    <template v-if="!isMacOS">
+      <button @click="appWindow.minimize()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors flex-shrink-0">
+        <Minus class="w-3.5 h-3.5 text-on-surface" />
+      </button>
+      <button @click="appWindow.close()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-error/20 hover:text-error transition-colors flex-shrink-0">
+        <X class="w-3.5 h-3.5 text-on-surface" />
+      </button>
+    </template>
   </div>
 </template>

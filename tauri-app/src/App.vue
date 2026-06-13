@@ -243,6 +243,15 @@ onUnmounted(() => {
       <!-- Header Section -->
       <div data-tauri-drag-region class="haze-surface rounded-2xl flex justify-between items-center px-4 py-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
         <div data-tauri-drag-region class="flex items-center gap-3">
+          <!-- Window Controls (macOS: left) -->
+          <div v-if="isMacOS" class="flex items-center gap-1 mr-1">
+            <button @click="win.minimizeWindow()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+              <Minus class="w-4 h-4 text-on-surface" />
+            </button>
+            <button @click="win.requestClose()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-error/20 hover:text-error transition-colors">
+              <X class="w-4 h-4 text-on-surface" />
+            </button>
+          </div>
           <div class="w-8 h-8 text-primary pointer-events-none [&>svg]:w-full [&>svg]:h-full" v-html="appIconSvg"></div>
           <div class="flex flex-col">
             <span class="text-sm font-extrabold text-primary">MicYou Desktop</span>
@@ -305,8 +314,8 @@ onUnmounted(() => {
             </Transition>
           </div>
 
-          <!-- Window Controls -->
-          <div class="flex items-center gap-1 ml-1">
+          <!-- Window Controls (non-macOS: right) -->
+          <div v-if="!isMacOS" class="flex items-center gap-1 ml-1">
             <button @click="win.minimizeWindow()" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
               <Minus class="w-4 h-4 text-on-surface" />
             </button>

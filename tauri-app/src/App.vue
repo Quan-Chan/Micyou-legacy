@@ -5,7 +5,7 @@ import { LogicalSize } from '@tauri-apps/api/window';
 import { useI18n } from 'vue-i18n';
 
 // Icons
-import { Mic, Wifi, RadioTower, Globe, ChevronDown, CheckCircle2, Settings, Link, Unlink, RefreshCw, ActivitySquare as MonitoringIcon, X, Minus, VolumeX, Volume2, QrCode as QrCodeIcon } from 'lucide-vue-next';
+import { Mic, Wifi, RadioTower, Globe, ChevronDown, CheckCircle2, Settings, Link, Unlink, RefreshCw, ActivitySquare as MonitoringIcon, X, Minus, VolumeX, Volume2, QrCode as QrCodeIcon, Loader2 } from 'lucide-vue-next';
 
 // Feature composables
 import { useServer } from './features/connection/composables/useServer';
@@ -391,9 +391,10 @@ onUnmounted(() => {
           <!-- Status Card -->
           <div class="haze-surface rounded-2xl p-4 flex-1 flex flex-col items-center justify-center text-center gap-3">
             <div class="w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-500"
-                 :class="server.serverState.value === 'streaming' ? 'bg-primary/20 text-primary' : (server.serverState.value === 'connecting' || server.serverState.value === 'starting' ? 'bg-tertiary/20 text-tertiary' : 'bg-surface-variant/50 text-on-surface-variant')">
+                 :class="server.serverState.value === 'streaming' ? 'bg-primary/20 text-primary' : (server.serverState.value === 'starting' ? 'bg-secondary/20 text-secondary' : (server.serverState.value === 'connecting' ? 'bg-tertiary/20 text-tertiary' : 'bg-surface-variant/50 text-on-surface-variant'))">
               <CheckCircle2 v-if="server.serverState.value === 'streaming'" class="w-6 h-6 animate-pulse" />
-              <RadioTower v-else class="w-6 h-6" :class="{ 'animate-spin-slow': server.serverState.value === 'connecting' || server.serverState.value === 'starting' }" />
+              <Loader2 v-else-if="server.serverState.value === 'starting'" class="w-6 h-6 animate-spin" />
+              <RadioTower v-else class="w-6 h-6" :class="{ 'animate-spin-slow': server.serverState.value === 'connecting' }" />
             </div>
             <div>
               <h3 class="text-sm font-bold">{{ server.serverState.value === 'streaming' ? $t('app.status.streaming') : (server.serverState.value === 'connecting' ? $t('app.status.connecting') : (server.serverState.value === 'starting' ? $t('app.status.starting') : $t('app.status.ready'))) }}</h3>
@@ -421,8 +422,9 @@ onUnmounted(() => {
 
             <div v-else class="relative w-full h-full flex items-center justify-center">
               <button ref="centralBtnRef" @click="toggleStreaming" @mouseenter="onCentralBtnHover" @mouseleave="onCentralBtnLeave" class="relative z-10 w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-95 border border-white/5 hover:shadow-lg hover:shadow-primary/30"
-                      :class="server.serverState.value === 'connecting' || server.serverState.value === 'starting' ? 'bg-tertiary shadow-tertiary/20 text-on-tertiary' : 'bg-primary shadow-primary/20 text-on-primary'">
-                <RefreshCw v-if="server.serverState.value === 'connecting' || server.serverState.value === 'starting'" class="w-7 h-7 animate-spin-slow" stroke-width="2.5" />
+                      :class="server.serverState.value === 'starting' ? 'bg-secondary shadow-secondary/20 text-on-secondary' : (server.serverState.value === 'connecting' ? 'bg-tertiary shadow-tertiary/20 text-on-tertiary' : 'bg-primary shadow-primary/20 text-on-primary')">
+                <RefreshCw v-if="server.serverState.value === 'connecting'" class="w-7 h-7 animate-spin-slow" stroke-width="2.5" />
+                <Loader2 v-else-if="server.serverState.value === 'starting'" class="w-7 h-7 animate-spin" stroke-width="2.5" />
                 <Link v-else class="w-7 h-7" stroke-width="2.5" />
               </button>
             </div>
@@ -438,7 +440,7 @@ onUnmounted(() => {
       <!-- Bottom Bar -->
       <div class="haze-surface rounded-2xl p-2 flex justify-between items-center flex-shrink-0">
         <div class="flex items-center px-3">
-          <div ref="statusDotRef" class="w-2 h-2 rounded-full mr-2" :class="server.serverState.value === 'streaming' ? 'bg-primary shadow-[0_0_8px_hsl(var(--primary))]' : (server.serverState.value === 'connecting' || server.serverState.value === 'starting' ? 'bg-tertiary animate-pulse shadow-[0_0_8px_hsl(var(--tertiary))]' : 'bg-on-surface-variant')"></div>
+          <div ref="statusDotRef" class="w-2 h-2 rounded-full mr-2" :class="server.serverState.value === 'streaming' ? 'bg-primary shadow-[0_0_8px_hsl(var(--primary))]' : (server.serverState.value === 'starting' ? 'bg-secondary animate-pulse shadow-[0_0_8px_hsl(var(--secondary))]' : (server.serverState.value === 'connecting' ? 'bg-tertiary animate-pulse shadow-[0_0_8px_hsl(var(--tertiary))]' : 'bg-on-surface-variant'))"></div>
           <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant transition-colors duration-300">{{ server.serverState.value === 'streaming' ? $t('app.status.stateStreaming') : (server.serverState.value === 'connecting' ? $t('app.status.stateConnecting') : (server.serverState.value === 'starting' ? $t('app.status.stateStarting') : $t('app.status.stateIdle'))) }}</span>
         </div>
 

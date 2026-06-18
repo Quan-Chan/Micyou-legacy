@@ -5,7 +5,7 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import {
   Link, Unlink, RefreshCw, Minus, X,
   Globe, ChevronDown, MoreHorizontal,
-  VolumeX, Volume2
+  VolumeX, Volume2, Loader2
 } from 'lucide-vue-next';
 
 interface NetworkInterface {
@@ -51,8 +51,8 @@ const isMacOS = typeof navigator !== 'undefined' &&
 const statusColor = computed(() => {
   switch (props.serverState) {
     case 'streaming': return 'bg-primary';
+    case 'starting': return 'bg-secondary animate-pulse';
     case 'connecting': return 'bg-tertiary animate-pulse';
-    case 'starting': return 'bg-tertiary animate-pulse';
     default: return 'bg-on-surface-variant';
   }
 });
@@ -60,8 +60,8 @@ const statusColor = computed(() => {
 const buttonColor = computed(() => {
   switch (props.serverState) {
     case 'streaming': return 'bg-error hover:bg-error/90';
+    case 'starting': return 'bg-secondary hover:bg-secondary/90';
     case 'connecting': return 'bg-tertiary hover:bg-tertiary/90';
-    case 'starting': return 'bg-tertiary hover:bg-tertiary/90';
     default: return 'bg-primary hover:bg-primary/90';
   }
 });
@@ -249,7 +249,8 @@ defineExpose({ closePopup });
       class="h-8 px-3 rounded-lg text-xs font-bold text-on-primary flex items-center gap-1.5 transition-colors flex-shrink-0"
       :class="buttonColor"
     >
-      <RefreshCw v-if="serverState === 'connecting' || serverState === 'starting'" class="w-3.5 h-3.5 animate-spin" />
+      <RefreshCw v-if="serverState === 'connecting'" class="w-3.5 h-3.5 animate-spin" />
+      <Loader2 v-else-if="serverState === 'starting'" class="w-3.5 h-3.5 animate-spin" />
       <Unlink v-else-if="serverState === 'streaming'" class="w-3.5 h-3.5" />
       <Link v-else class="w-3.5 h-3.5" />
       <span>{{ serverState === 'streaming' ? $t('app.status.stateStreaming') : (serverState === 'connecting' ? $t('app.status.stateConnecting') : (serverState === 'starting' ? $t('app.status.stateStarting') : $t('app.start'))) }}</span>

@@ -108,7 +108,6 @@ export function useServer(options?: { audioLevel?: Ref<number>; isMuted?: Ref<bo
           bindAddress: bindAddress,
           outputDevice: (outputDevice.value && outputDevice.value !== 'auto' && outputDevice.value !== 'default') ? outputDevice.value : null
         });
-        serverState.value = 'connecting';
         // Auto-switch to BlackHole input on macOS
         if (isMacOS) {
           try { await invoke('set_blackhole_as_input'); } catch {}
@@ -139,6 +138,7 @@ export function useServer(options?: { audioLevel?: Ref<number>; isMuted?: Ref<bo
           webUrl.value = url;
           generateQrCode(url);
         }
+        serverState.value = 'connecting';
       } catch (e: any) {
         console.error(e);
         try { await invoke('stop_server'); } catch {}
@@ -239,8 +239,8 @@ export function useServer(options?: { audioLevel?: Ref<number>; isMuted?: Ref<bo
         bindAddress: bindAddress,
         outputDevice: (outputDevice.value && outputDevice.value !== 'auto' && outputDevice.value !== 'default') ? outputDevice.value : null
       });
-      serverState.value = 'connecting';
       await invoke('enable_usb_mode', { port: pendingUsbPort.value, deviceSerial: serial });
+      serverState.value = 'connecting';
     } catch (e: any) {
       console.error(e);
       try { await invoke('stop_server'); } catch {}

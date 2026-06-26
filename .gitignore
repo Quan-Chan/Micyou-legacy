@@ -26,3 +26,8 @@ QWEN.md
 .trae
 composeApp/micyou.conf
 agentchattr/
+
+# Build artifacts
+MicYou-windows-*.zip
+org/
+

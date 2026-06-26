@@ -83,6 +83,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1771,6 +1772,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                         Text(stringResource(Res.string.equalizerPreAmpLabel), style = MaterialTheme.typography.bodyMedium)
                         Text("${eqConfig.preAmp.toInt()} dB", style = MaterialTheme.typography.bodySmall)
                     }
+                    val currentPreAmpEqConfig by rememberUpdatedState(eqConfig)
                     Slider(
                         value = eqConfig.preAmp,
                         onValueChange = { viewModel.setEqualizerConfig(eqConfig.copy(preAmp = it)) },
@@ -1781,8 +1783,8 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                     val event = awaitPointerEvent()
                                     if (event.type == PointerEventType.Scroll) {
                                         val delta = event.changes.first().scrollDelta.y
-                                        val newValue = (eqConfig.preAmp - delta).coerceIn(-30f, 30f)
-                                        viewModel.setEqualizerConfig(eqConfig.copy(preAmp = newValue))
+                                        val newValue = (currentPreAmpEqConfig.preAmp - delta).coerceIn(-30f, 30f)
+                                        viewModel.setEqualizerConfig(currentPreAmpEqConfig.copy(preAmp = newValue))
                                     }
                                 }
                             }
@@ -1813,13 +1815,16 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.fillMaxHeight().width(44.dp)
                             ) {
+                                val displayVal = gain.toInt()
                                 Text(
-                                    if (gain >= 0) "+${gain.toInt()}" else "${gain.toInt()}",
+                                    if (displayVal > 0) "+$displayVal" else "$displayVal",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (gain != 0f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = if (gain != 0f) FontWeight.Bold else FontWeight.Normal
+                                    color = if (displayVal != 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (displayVal != 0) FontWeight.Bold else FontWeight.Normal
                                 )
                                 Spacer(Modifier.height(8.dp))
+                                val currentGain by rememberUpdatedState(gain)
+                                val currentEqConfig by rememberUpdatedState(eqConfig)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -1830,10 +1835,10 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                                     val event = awaitPointerEvent()
                                                     if (event.type == PointerEventType.Scroll) {
                                                         val delta = event.changes.first().scrollDelta.y
-                                                        val newValue = (gain - delta).coerceIn(-30f, 30f)
-                                                        val newGains = eqConfig.gains.toMutableList()
+                                                        val newValue = (currentGain - delta).coerceIn(-30f, 30f)
+                                                        val newGains = currentEqConfig.gains.toMutableList()
                                                         newGains[index] = newValue
-                                                        viewModel.setEqualizerConfig(eqConfig.copy(gains = newGains))
+                                                        viewModel.setEqualizerConfig(currentEqConfig.copy(gains = newGains))
                                                     }
                                                 }
                                             }

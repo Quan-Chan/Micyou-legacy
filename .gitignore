@@ -28,6 +28,7 @@ composeApp/micyou.conf
 agentchattr/
 
 # Build artifacts
-MicYou-windows-*.zip
+MicYou-*.zip
 org/
+build-output/
 

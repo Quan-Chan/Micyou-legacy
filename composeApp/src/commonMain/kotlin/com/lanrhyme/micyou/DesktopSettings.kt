@@ -32,6 +32,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -83,17 +85,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -104,6 +106,8 @@ import com.lanrhyme.micyou.animation.EasingFunctions
 import com.lanrhyme.micyou.theme.ExpressiveCard
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.round
 import micyou.composeapp.generated.resources.Res
 import micyou.composeapp.generated.resources.aboutSection
 import micyou.composeapp.generated.resources.agcAttackRateLabel
@@ -1710,11 +1714,13 @@ fun SettingsSection.getLabel(): String {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
     val state by viewModel.uiState.collectAsState()
     val eqConfig = state.equalizerConfig
+    val coroutineScope = rememberCoroutineScope()
+    val presetRowState = rememberLazyListState()
     
     val presets = listOf(
         stringResource(Res.string.equalizerNormalPreset) to List(10) { 0f },
@@ -1741,11 +1747,28 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
+                    .onPointerEvent(PointerEventType.Scroll) { event ->
+                        val scrollDelta = event.changes.firstOrNull()?.scrollDelta?.y ?: return@onPointerEvent
+                        if (scrollDelta != 0f) {
+                            val currentIndex = presetRowState.firstVisibleItemIndex
+                            val targetIndex = if (scrollDelta < 0f)
+                                maxOf(0, currentIndex - 1)
+                            else
+                                minOf(presets.size - 1, currentIndex + 1)
+                            coroutineScope.launch {
+                                presetRowState.scrollToItem(targetIndex)
+                            }
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(stringResource(Res.string.equalizerPresetsLabel), style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(8.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyRow(
+                        state = presetRowState,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         items(presets) { preset ->
                             FilterChip(
                                 selected = eqConfig.gains == preset.second,
@@ -1772,23 +1795,13 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                         Text(stringResource(Res.string.equalizerPreAmpLabel), style = MaterialTheme.typography.bodyMedium)
                         Text("${eqConfig.preAmp.toInt()} dB", style = MaterialTheme.typography.bodySmall)
                     }
-                    val currentPreAmpEqConfig by rememberUpdatedState(eqConfig)
                     Slider(
                         value = eqConfig.preAmp,
                         onValueChange = { viewModel.setEqualizerConfig(eqConfig.copy(preAmp = it)) },
+                        onValueChangeFinished = {
+                            viewModel.setEqualizerConfig(eqConfig.copy(preAmp = round(eqConfig.preAmp)))
+                        },
                         valueRange = -30f..30f,
-                        modifier = Modifier.pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    if (event.type == PointerEventType.Scroll) {
-                                        val delta = event.changes.first().scrollDelta.y
-                                        val newValue = (currentPreAmpEqConfig.preAmp - delta).coerceIn(-30f, 30f)
-                                        viewModel.setEqualizerConfig(currentPreAmpEqConfig.copy(preAmp = newValue))
-                                    }
-                                }
-                            }
-                        }
                     )
                 }
             }
@@ -1823,26 +1836,10 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                     fontWeight = if (displayVal != 0) FontWeight.Bold else FontWeight.Normal
                                 )
                                 Spacer(Modifier.height(8.dp))
-                                val currentGain by rememberUpdatedState(gain)
-                                val currentEqConfig by rememberUpdatedState(eqConfig)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .width(44.dp)
-                                        .pointerInput(Unit) {
-                                            awaitPointerEventScope {
-                                                while (true) {
-                                                    val event = awaitPointerEvent()
-                                                    if (event.type == PointerEventType.Scroll) {
-                                                        val delta = event.changes.first().scrollDelta.y
-                                                        val newValue = (currentGain - delta).coerceIn(-30f, 30f)
-                                                        val newGains = currentEqConfig.gains.toMutableList()
-                                                        newGains[index] = newValue
-                                                        viewModel.setEqualizerConfig(currentEqConfig.copy(gains = newGains))
-                                                    }
-                                                }
-                                            }
-                                        },
+                                        .width(44.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Slider(
@@ -1851,6 +1848,14 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                             val newGains = eqConfig.gains.toMutableList()
                                             newGains[index] = newValue
                                             viewModel.setEqualizerConfig(eqConfig.copy(gains = newGains))
+                                        },
+                                        onValueChangeFinished = {
+                                            val rounded = round(eqConfig.gains[index])
+                                            if (rounded != eqConfig.gains[index]) {
+                                                val newGains = eqConfig.gains.toMutableList()
+                                                newGains[index] = rounded
+                                                viewModel.setEqualizerConfig(eqConfig.copy(gains = newGains))
+                                            }
                                         },
                                         valueRange = -30f..30f,
                                         modifier = Modifier

@@ -261,9 +261,11 @@ fun DesktopHomeEnhanced(
                     )
 
                     if (state.showMonitoringPanel) {
+                        val currentMetrics by viewModel.audioMetricsFlow.collectAsState(initial = null)
+                        val currentHistory by viewModel.metricsHistoryFlow.collectAsState(initial = emptyList())
                         MonitoringPanel(
-                            metrics = state.audioMetrics,
-                            history = state.metricsHistory,
+                            metrics = currentMetrics,
+                            history = currentHistory,
                             audioLevel = audioLevel,
                             isRunning = state.streamState == StreamState.Streaming,
                             modifier = Modifier.weight(0.28f),

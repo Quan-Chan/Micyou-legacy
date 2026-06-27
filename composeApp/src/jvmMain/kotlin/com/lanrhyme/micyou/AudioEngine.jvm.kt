@@ -137,7 +137,10 @@ actual class AudioEngine actual constructor() {
                 if (newState == StreamState.Streaming) {
                     audioPipeline.reset()
                     startAudioProcessing()
-                } else if (newState == StreamState.Connecting || newState == StreamState.Idle || newState == StreamState.Error) {
+                } else if (newState == StreamState.Connecting ||
+                    newState == StreamState.Idle ||
+                    newState == StreamState.Error
+                ) {
                     stopAudioProcessing()
                 }
                 _state.value = newState

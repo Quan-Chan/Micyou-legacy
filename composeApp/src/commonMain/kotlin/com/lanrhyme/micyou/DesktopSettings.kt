@@ -90,12 +90,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -1741,7 +1741,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
         )
 
         if (eqConfig.enabled) {
-            // Presets
+            // 预设
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1780,7 +1780,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                 }
             }
 
-            // Pre-Amp
+            // 前置放大器
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1801,12 +1801,12 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                         onValueChangeFinished = {
                             viewModel.setEqualizerConfig(eqConfig.copy(preAmp = round(eqConfig.preAmp)))
                         },
-                        valueRange = -30f..30f,
+                        valueRange = -30f..30f
                     )
                 }
             }
 
-            // Bands
+            // 频段
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

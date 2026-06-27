@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -95,7 +94,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -106,7 +105,6 @@ import com.lanrhyme.micyou.animation.EasingFunctions
 import com.lanrhyme.micyou.theme.ExpressiveCard
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.round
 import micyou.composeapp.generated.resources.Res
 import micyou.composeapp.generated.resources.aboutSection
@@ -1719,7 +1717,6 @@ fun SettingsSection.getLabel(): String {
 fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
     val state by viewModel.uiState.collectAsState()
     val eqConfig = state.equalizerConfig
-    val coroutineScope = rememberCoroutineScope()
     val presetRowState = rememberLazyListState()
     
     val presets = listOf(
@@ -1747,18 +1744,23 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
-                    .onPointerEvent(PointerEventType.Scroll) { event ->
-                        val scrollDelta = event.changes.firstOrNull()?.scrollDelta?.y ?: return@onPointerEvent
-                        if (scrollDelta != 0f) {
-                            val currentIndex = presetRowState.firstVisibleItemIndex
-                            val targetIndex = if (scrollDelta < 0f)
-                                maxOf(0, currentIndex - 1)
-                            else
-                                minOf(presets.size - 1, currentIndex + 1)
-                            coroutineScope.launch {
-                                presetRowState.scrollToItem(targetIndex)
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                if (event.type == PointerEventType.Scroll) {
+                                    val scrollDelta = event.changes.firstOrNull()?.scrollDelta?.y ?: continue
+                                    if (scrollDelta != 0f) {
+                                        val currentIndex = presetRowState.firstVisibleItemIndex
+                                        val targetIndex = if (scrollDelta < 0f)
+                                            maxOf(0, currentIndex - 1)
+                                        else
+                                            minOf(presets.size - 1, currentIndex + 1)
+                                        presetRowState.scrollToItem(targetIndex)
+                                        event.changes.forEach { it.consume() }
+                                    }
+                                }
                             }
-                            event.changes.forEach { it.consume() }
                         }
                     }
             ) {

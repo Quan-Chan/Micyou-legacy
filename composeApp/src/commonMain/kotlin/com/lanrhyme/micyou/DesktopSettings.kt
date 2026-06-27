@@ -1741,7 +1741,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
         )
 
         if (eqConfig.enabled) {
-            // 预设
+            // Presets
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1780,7 +1780,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                 }
             }
 
-            // 前置放大器
+            // Pre-Amp
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1806,7 +1806,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                 }
             }
 
-            // 频段
+            // Bands
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

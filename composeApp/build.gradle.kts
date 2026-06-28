@@ -141,7 +141,7 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.lanrhyme.micyou"
+        applicationId = "com.lanrhyme.micyou.legacy"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = project.property("project.version.code").toString().toInt()
@@ -217,9 +217,9 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = project.property("project.name").toString()
             packageVersion = project.property("project.version").toString().substringBefore("-").substringBefore("hotfix")
-            description = "MicYou Application"
-            vendor = "LanRhyme"
-            copyright = "Copyright (c) 2026 LanRhyme"
+            description = "MicYou Legacy Application"
+            vendor = "Quan-Chan"
+            copyright = "Copyright (c) 2026 Quan-Chan, based on LanRhyme/MicYou"
             modules("java.net.http", "jdk.accessibility", "jdk.unsupported.desktop")
             
             windows {
@@ -227,7 +227,7 @@ compose.desktop {
                 iconFile.set(generatedIcon)
                 perUserInstall = true
                 menu = true
-                menuGroup = "MicYou"
+                menuGroup = "MicYou Legacy"
                 shortcut = true
                 dirChooser = false
                 upgradeUuid = "f76264ff-05a4-494a-a8fb-7ed3410cb17c"
@@ -241,7 +241,7 @@ compose.desktop {
                 iconFile.set(project.file("src/commonMain/composeResources/drawable/mac_icon.icns"))
                 infoPlist {
                     extraKeysRawXml = """    <key>CFBundleIconName</key>
-    <string>MicYou</string>"""
+    <string>MicYou Legacy</string>"""
                 }
             }
         }

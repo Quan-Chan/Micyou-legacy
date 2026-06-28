@@ -243,8 +243,8 @@ class MainViewModel : ViewModel() {
             }
         }
         
-        // Auto-check for updates
-        if (settings.getBoolean("auto_check_update", true)) {
+        // Auto-check for updates (disabled in fork - always false)
+        if (false) {
             updateViewModel.checkUpdateAuto()
         }
         

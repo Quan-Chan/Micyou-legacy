@@ -106,6 +106,7 @@ fun MobileSettingsPage(
     var showLicenseDialog by remember { mutableStateOf(false) }
     var showContributorsDialog by remember { mutableStateOf(false) }
     var showSponsorsDialog by remember { mutableStateOf(false) }
+    var showMobileForkFeatureUnavailableDialog by remember { mutableStateOf(false) }
 
     // About section dialogs
     if (showContributorsDialog) {
@@ -148,7 +149,7 @@ fun MobileSettingsPage(
 
             // General Section
             item { SectionHeader(stringResource(Res.string.generalSection)) }
-            generalSettingsItems(state, viewModel, containerColor, enableHaze, hazeState, platform)
+            generalSettingsItems(state, viewModel, containerColor, enableHaze, hazeState, platform, onShowForkFeatureUnavailableDialog = { showMobileForkFeatureUnavailableDialog = true })
 
             // Appearance Section
             item { SectionHeader(stringResource(Res.string.appearanceSection)) }
@@ -170,7 +171,8 @@ fun MobileSettingsPage(
                 state, viewModel, containerColor, enableHaze, hazeState,
                 onShowLicenseDialog = { showLicenseDialog = true },
                 onShowContributorsDialog = { showContributorsDialog = true },
-                onShowSponsorsDialog = { showSponsorsDialog = true }
+                onShowSponsorsDialog = { showSponsorsDialog = true },
+                onShowForkFeatureUnavailableDialog = { showMobileForkFeatureUnavailableDialog = true }
             )
 
             item { Spacer(Modifier.height(16.dp)) }
@@ -208,12 +210,11 @@ fun MobileSettingsPage(
             )
         }
 
-        // Mirror CDK Dialog
-        if (state.showMirrorCdkDialog) {
-            MirrorCdkDialog(
-                cdk = state.mirrorCdk,
-                onDismiss = { viewModel.dismissMirrorCdkDialog() },
-                onConfirm = { cdk -> viewModel.confirmMirrorCdk(cdk) })
+        // General unavailable feature dialog
+        if (showMobileForkFeatureUnavailableDialog) {
+            MobileUnavailableFeatureDialog(
+                onDismiss = { showMobileForkFeatureUnavailableDialog = false }
+            )
         }
     }
 }
@@ -246,7 +247,8 @@ private fun LazyListScope.generalSettingsItems(
     containerColor: Color,
     enableHaze: Boolean,
     hazeState: HazeState?,
-    platform: Platform
+    platform: Platform,
+    onShowForkFeatureUnavailableDialog: () -> Unit
 ) {
     item {
         val items = mutableListOf<@Composable (isFirst: Boolean, isLast: Boolean) -> Unit>()
@@ -316,8 +318,8 @@ private fun LazyListScope.generalSettingsItems(
             ExpressiveSettingsSwitchItem(
                 headline = stringResource(Res.string.autoCheckUpdateLabel),
                 supporting = stringResource(Res.string.autoCheckUpdateDesc),
-                checked = state.autoCheckUpdate,
-                onCheckedChange = { viewModel.setAutoCheckUpdate(it) },
+                checked = false,
+                onCheckedChange = { onShowForkFeatureUnavailableDialog() },
                 isFirst = isFirst,
                 isLast = isLast,
                 containerColor = containerColor,
@@ -330,8 +332,8 @@ private fun LazyListScope.generalSettingsItems(
             ExpressiveSettingsSwitchItem(
                 headline = stringResource(Res.string.mirrorDownloadLabel),
                 supporting = stringResource(Res.string.mirrorDownloadDesc),
-                checked = state.useMirrorDownload,
-                onCheckedChange = { viewModel.setUseMirrorDownload(it) },
+                checked = false,
+                onCheckedChange = { onShowForkFeatureUnavailableDialog() },
                 isFirst = isFirst,
                 isLast = isLast,
                 containerColor = containerColor,
@@ -947,7 +949,8 @@ private fun LazyListScope.aboutSettingsItems(
     hazeState: HazeState?,
     onShowLicenseDialog: () -> Unit,
     onShowContributorsDialog: () -> Unit,
-    onShowSponsorsDialog: () -> Unit
+    onShowSponsorsDialog: () -> Unit,
+    onShowForkFeatureUnavailableDialog: () -> Unit
 ) {
     item {
         val uriHandler = LocalUriHandler.current
@@ -973,7 +976,7 @@ private fun LazyListScope.aboutSettingsItems(
                     Icon(Icons.Rounded.Person, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(Res.string.developerLabel), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                        Text("原开发者", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(4.dp))
                         Text("LanRhyme、ChinsaaWei、ChouChiu", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -981,7 +984,7 @@ private fun LazyListScope.aboutSettingsItems(
             }
         }
 
-        // GitHub 仓库
+        // 原版 GitHub 仓库
         items.add { isFirst, isLast ->
             ExpressiveListItem(
                 isFirst = isFirst,
@@ -1000,10 +1003,42 @@ private fun LazyListScope.aboutSettingsItems(
                     Icon(Icons.Rounded.Language, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(Res.string.githubRepoLabel), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                        Text("原版 GitHub 仓库", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(4.dp))
                         Text(
                             "https://github.com/LanRhyme/MicYou",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    }
+                }
+            }
+        }
+
+        // 本分支维护
+        items.add { isFirst, isLast ->
+            ExpressiveListItem(
+                isFirst = isFirst,
+                isLast = isLast,
+                onClick = { uriHandler.openUri("https://github.com/Quan-Chan/Micyou-legacy") },
+                containerColor = containerColor,
+                hazeState = hazeState,
+                enableHaze = enableHaze
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Code, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("本分支维护", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "https://github.com/Quan-Chan/Micyou-legacy",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             textDecoration = TextDecoration.Underline
@@ -1059,7 +1094,7 @@ private fun LazyListScope.aboutSettingsItems(
                     Icon(Icons.Rounded.Favorite, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(Res.string.sponsorsLabel), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                        Text("原作者的赞助者", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(4.dp))
                         Text(stringResource(Res.string.sponsorsDesc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -1072,7 +1107,7 @@ private fun LazyListScope.aboutSettingsItems(
             ExpressiveListItem(
                 isFirst = isFirst,
                 isLast = isLast,
-                onClick = { viewModel.checkUpdateManual() },
+                onClick = { onShowForkFeatureUnavailableDialog() },
                 containerColor = containerColor,
                 hazeState = hazeState,
                 enableHaze = enableHaze
@@ -1093,7 +1128,7 @@ private fun LazyListScope.aboutSettingsItems(
                             Text(getAppVersion(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    TextButton(onClick = { viewModel.checkUpdateManual() }) {
+                    TextButton(onClick = { onShowForkFeatureUnavailableDialog() }) {
                         Text(stringResource(Res.string.checkUpdate))
                     }
                 }
@@ -1194,66 +1229,47 @@ private fun LazyListScope.aboutSettingsItems(
 }
 
 @Composable
-private fun MirrorCdkDialog(
-    cdk: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
+private fun MobileUnavailableFeatureDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-    var inputCdk by remember { mutableStateOf(cdk) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.mirrorCdkLabel)) },
+        title = { Text("此功能在此版本不可用") },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.mirrorCdkDesc),
+                    text = "此功能在原版项目中可用。",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = inputCdk,
-                    onValueChange = { inputCdk = it },
-                    placeholder = { Text(stringResource(Res.string.mirrorCdkPlaceholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
                 Spacer(Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    val langLabel = stringResource(Res.string.languageLabel)
-                    Text(
-                        text = stringResource(Res.string.mirrorCdkGetLink),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable {
-                            val url = if (langLabel.contains("中文") || langLabel.contains("简体") || langLabel.contains("繁體") || langLabel.contains("粤语")) {
-                                "https://mirrorchyan.com/zh/get-start"
-                            } else {
-                                "https://mirrorchyan.com/en/get-start"
-                            }
-                            uriHandler.openUri(url)
-                        }
-                    )
-
-                }
+                Text(
+                    text = "原版仓库：",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "https://github.com/LanRhyme/MicYou",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { uriHandler.openUri("https://github.com/LanRhyme/MicYou") }
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "本仓库：",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "https://github.com/Quan-Chan/Micyou-legacy",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { uriHandler.openUri("https://github.com/Quan-Chan/Micyou-legacy") }
+                )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = { onConfirm(inputCdk) },
-                enabled = inputCdk.isNotBlank()
-            ) {
-                Text(stringResource(Res.string.ok))
-            }
-        },
-        dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(Res.string.ok))
             }
         }
     )

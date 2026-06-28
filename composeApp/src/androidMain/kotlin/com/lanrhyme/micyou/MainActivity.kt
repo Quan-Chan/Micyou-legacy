@@ -183,7 +183,7 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        const val ACTION_QUICK_START = "com.lanrhyme.micyou.ACTION_QUICK_START"
+        const val ACTION_QUICK_START = "com.lanrhyme.micyou.legacy.ACTION_QUICK_START"
     }
 }
 

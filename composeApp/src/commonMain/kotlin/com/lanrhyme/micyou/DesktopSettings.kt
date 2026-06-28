@@ -732,6 +732,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (section) {
             SettingsSection.General -> {
+                var showForkFeatureUnavailableDialog by remember { mutableStateOf(false) }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SettingsDropdownItem(
                         headline = stringResource(Res.string.languageLabel),
@@ -806,23 +807,37 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                         )
                     }
 
-                    // Auto check update toggle (all platforms)
-                    SettingsSwitchItem(
-                        headline = stringResource(Res.string.autoCheckUpdateLabel),
-                        supporting = stringResource(Res.string.autoCheckUpdateDesc),
-                        checked = state.autoCheckUpdate,
-                        onCheckedChange = { viewModel.setAutoCheckUpdate(it) },
-                        cardOpacity = cardOpacity
-                    )
+                    // Auto check update toggle (disabled in fork)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(stringResource(Res.string.autoCheckUpdateLabel)) },
+                            supportingContent = { Text(stringResource(Res.string.autoCheckUpdateDesc)) },
+                            leadingContent = { Icon(Icons.Rounded.Update, null, modifier = Modifier.size(24.dp)) },
+                            modifier = Modifier.clickable { showForkFeatureUnavailableDialog = true },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
 
-                    // Mirror download toggle
-                    SettingsSwitchItem(
-                        headline = stringResource(Res.string.mirrorDownloadLabel),
-                        supporting = stringResource(Res.string.mirrorDownloadDesc),
-                        checked = state.useMirrorDownload,
-                        onCheckedChange = { viewModel.setUseMirrorDownload(it) },
-                        cardOpacity = cardOpacity
-                    )
+                    // Mirror download toggle (disabled in fork)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(stringResource(Res.string.mirrorDownloadLabel)) },
+                            supportingContent = { Text(stringResource(Res.string.mirrorDownloadDesc)) },
+                            leadingContent = { Icon(Icons.Filled.Download, null, modifier = Modifier.size(24.dp)) },
+                            modifier = Modifier.clickable { showForkFeatureUnavailableDialog = true },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
 
                     // VB-Cable management (Windows only)
                     if (isWindowsPlatform()) {
@@ -1528,6 +1543,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                 var showLicenseDialog by remember { mutableStateOf(false) }
     var showContributorsDialog by remember { mutableStateOf(false) }
     var showSponsorsDialog by remember { mutableStateOf(false) }
+    var showAboutFeatureUnavailableDialog by remember { mutableStateOf(false) }
 
                 if (showContributorsDialog) {
                     ContributorsDialog(onDismiss = { showContributorsDialog = false })
@@ -1571,7 +1587,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                             .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
                     ) {
                         ListItem(
-                            headlineContent = { Text(stringResource(Res.string.githubRepoLabel)) },
+                            headlineContent = { Text("原版 GitHub 仓库") },
                             supportingContent = { 
                                 Text(
                                     "https://github.com/LanRhyme/MicYou",
@@ -1581,6 +1597,26 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                                 ) 
                             },
                             leadingContent = { Icon(Icons.Rounded.Language, null,modifier = Modifier.size(24.dp)) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
+                    ) {
+                        ListItem(
+                            headlineContent = { Text("本分支维护") },
+                            supportingContent = { 
+                                Text(
+                                    "https://github.com/Quan-Chan/Micyou-legacy",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textDecoration = TextDecoration.Underline,
+                                    modifier = Modifier.clickable { uriHandler.openUri("https://github.com/Quan-Chan/Micyou-legacy") }
+                                ) 
+                            },
+                            leadingContent = { Icon(Icons.Rounded.Code, null, modifier = Modifier.size(24.dp)) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }
@@ -1605,7 +1641,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                             .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
                     ) {
                         ListItem(
-                            headlineContent = { Text(stringResource(Res.string.sponsorsLabel)) },
+                            headlineContent = { Text("原作者的赞助者") },
                             supportingContent = { Text(stringResource(Res.string.sponsorsDesc)) },
                             leadingContent = { Icon(Icons.Rounded.Favorite, null,modifier = Modifier.size(24.dp)) },
                             modifier = Modifier.clickable { showSponsorsDialog = true },
@@ -1623,7 +1659,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                             supportingContent = { Text(getAppVersion()) },
                             leadingContent = { Icon(Icons.Rounded.Info, null,modifier = Modifier.size(24.dp)) },
                             trailingContent = {
-                                TextButton(onClick = { viewModel.checkUpdateManual() }) {
+                                TextButton(onClick = { showAboutFeatureUnavailableDialog = true }) {
                                     Text(stringResource(Res.string.checkUpdate))
                                 }
                             },
@@ -1684,18 +1720,22 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
-                     }
+                    }
+                }
+                
+                if (showAboutFeatureUnavailableDialog) {
+                    UnavailableFeatureDialog(
+                        onDismiss = { showAboutFeatureUnavailableDialog = false }
+                    )
                 }
             }
         }
     }
 
-    // Mirror CDK Dialog
-    if (state.showMirrorCdkDialog) {
-        MirrorCdkDialog(
-            cdk = state.mirrorCdk,
-            onDismiss = { viewModel.dismissMirrorCdkDialog() },
-            onConfirm = { cdk -> viewModel.confirmMirrorCdk(cdk) }
+    // Unavailable feature dialog (replaces Mirror CDK)
+    if (showMirrorCdkUnavailableDialog) {
+        UnavailableFeatureDialog(
+            onDismiss = { showMirrorCdkUnavailableDialog = false }
         )
     }
 }
@@ -1719,6 +1759,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
     val eqConfig = state.equalizerConfig
     val presetRowState = rememberLazyListState()
     var pendingPresetScrollTarget by remember { mutableStateOf<Int?>(null) }
+    var showMirrorCdkUnavailableDialog by remember { mutableStateOf(false) }
     
     LaunchedEffect(pendingPresetScrollTarget) {
         pendingPresetScrollTarget?.let { target ->
@@ -1933,65 +1974,50 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
 }
 
 @Composable
-private fun MirrorCdkDialog(
-    cdk: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
+@Composable
+private fun UnavailableFeatureDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-    var inputCdk by remember { mutableStateOf(cdk) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.mirrorCdkLabel)) },
+        title = { Text("此功能在此版本不可用") },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.mirrorCdkDesc),
+                    text = "此功能在原版项目中可用。",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = inputCdk,
-                    onValueChange = { inputCdk = it },
-                    placeholder = { Text(stringResource(Res.string.mirrorCdkPlaceholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
                 Spacer(Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    val langLabel = stringResource(Res.string.languageLabel)
-                    Text(
-                        text = stringResource(Res.string.mirrorCdkGetLink),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable {
-                            val url = if (langLabel.contains("中文") || langLabel.contains("简体") || langLabel.contains("繁體") || langLabel.contains("粤语")) {
-                                "https://mirrorchyan.com/zh/get-start"
-                            } else {
-                                "https://mirrorchyan.com/en/get-start"
-                            }
-                            uriHandler.openUri(url)
-                        }
-                    )
-                }
+                Text(
+                    text = "原版仓库：",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "https://github.com/LanRhyme/MicYou",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { uriHandler.openUri("https://github.com/LanRhyme/MicYou") }
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "本仓库：",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "https://github.com/Quan-Chan/Micyou-legacy",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { uriHandler.openUri("https://github.com/Quan-Chan/Micyou-legacy") }
+                )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = { onConfirm(inputCdk) },
-                enabled = inputCdk.isNotBlank()
-            ) {
-                Text(stringResource(Res.string.ok))
-            }
-        },
-        dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(Res.string.ok))
             }
         }
     )

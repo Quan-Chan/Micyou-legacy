@@ -55,9 +55,9 @@ object PlatformInfo {
             isWindows -> {
                 val localAppData = System.getenv("LOCALAPPDATA")
                     ?: "$home/AppData/Local"
-                java.io.File(localAppData, "MicYou")
+                java.io.File(localAppData, "MicYou Legacy")
             }
-            isMacOS -> java.io.File("$home/Library/Application Support", "MicYou")
+            isMacOS -> java.io.File("$home/Library/Application Support", "MicYou Legacy")
             else -> java.io.File(home, ".micyou")
         }
         dir.apply { mkdirs() }

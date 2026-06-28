@@ -6,7 +6,7 @@
     <string name="amplificationMultiplierLabel">放大乘数值</string>
     <string name="androidAudioProcessingDesc">使用硬件音频处理。可能影响输出的质量值。</string>
     <string name="androidAudioProcessingLabel">安卓德内建音频处理</string>
-    <string name="appName">麦克风你</string>
+    <string name="appName">MicYou Legacy</string>
     <string name="appearanceSection">外观性部分</string>
     <string name="audioConfigAppliedLabel">已经被应用的</string>
     <string name="audioFormatLabel">音频格式化项</string>

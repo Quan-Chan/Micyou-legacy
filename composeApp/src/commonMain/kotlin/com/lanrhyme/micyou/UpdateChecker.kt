@@ -97,7 +97,7 @@ data class DownloadProgress(
 
 class UpdateChecker {
     companion object {
-        const val MIRROR_RID = "MicYou"
+        const val MIRROR_RID = "MicYou_Legacy"
         const val MIRROR_API_BASE = "https://mirrorchyan.com/api"
         private const val GITHUB_RELEASE_API = "https://api.github.com/repos/LanRhyme/MicYou/releases/latest"
         private const val GITHUB_RELEASE_WEB = "https://github.com/LanRhyme/MicYou/releases/latest"

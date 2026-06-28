@@ -1,5 +1,6 @@
 package com.lanrhyme.micyou
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -188,136 +189,38 @@ fun App(
                 )
             }
 
-            // First Launch Dialog - Enhanced with Quick Start Guide
+            // First Launch Dialog - Fork notice
             if (showFirstLaunchDialog) {
                 AlertDialog(
-                    onDismissRequest = { },
-                    title = { Text(stringResource(Res.string.firstLaunchTitle)) },
+                    onDismissRequest = { finalViewModel.dismissFirstLaunchDialog() },
+                    title = { Text("关于本版本") },
                     text = {
                         Column(
-                            modifier = Modifier
-                                .widthIn(min = 400.dp, max = 500.dp)
-                                .heightIn(max = 450.dp)
-                                .verticalScroll(rememberScrollState()),
+                            modifier = Modifier.widthIn(max = 450.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = stringResource(Res.string.firstLaunchMessage),
+                                text = "本版本为 MicYou 的旧版本维护，新用户建议下载原作者的新版本。",
                                 style = MaterialTheme.typography.bodyMedium
                             )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = stringResource(Res.string.firstLaunchQuickStartTitle),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                text = "https://github.com/LanRhyme/MicYou",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable { openUrl("https://github.com/LanRhyme/MicYou") }
                             )
-
-                            // Step 1
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep1Title),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep1Desc),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-
-                            // Step 2
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep2Title),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep2WifiDesc),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep2UsbDesc),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-
-                            // Step 3
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep3Title),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep3Desc),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-
-                            // Step 4
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = stringResource(Res.string.firstLaunchStep4Title),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = stringResource(firstLaunchStep4DescRes),
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "（这个版本功能基本不更新，功能相比原版可能非常落后，但会专注优化稳定性和UI可用性，如果有通用的bug修复，也会提交到原版库）",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     },
                     confirmButton = {
-                        Row {
-                            TextButton(onClick = {
-                                openUrl("https://www.bilibili.com/video/BV1MpNKz8ELw")
-                            }) {
-                                Text(stringResource(Res.string.firstLaunchVideoGuide))
-                            }
-                            TextButton(onClick = {
-                                openUrl("https://github.com/LanRhyme/MicYou/blob/master/docs/FAQ.md")
-                            }) {
-                                Text(stringResource(Res.string.firstLaunchTextGuide))
-                            }
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = {
-                            finalViewModel.dismissFirstLaunchDialog()
-                        }) {
-                            Text(stringResource(Res.string.firstLaunchGotItButton))
+                        TextButton(onClick = { finalViewModel.dismissFirstLaunchDialog() }) {
+                            Text(stringResource(Res.string.ok))
                         }
                     }
                 )

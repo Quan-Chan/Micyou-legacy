@@ -6,7 +6,7 @@
     <string name="amplificationMultiplierLabel">倍數</string>
     <string name="androidAudioProcessingDesc">開咗可能會影響輸出嘅最終效果</string>
     <string name="androidAudioProcessingLabel">手機硬件內置音訊處理</string>
-    <string name="appName">MicYou</string>
+    <string name="appName">MicYou Legacy</string>
     <string name="appearanceSection">外觀</string>
     <string name="audioConfigAppliedLabel">已套用</string>
     <string name="audioFormatLabel">音訊格式</string>

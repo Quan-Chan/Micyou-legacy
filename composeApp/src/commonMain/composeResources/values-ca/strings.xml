@@ -6,7 +6,7 @@
     <string name="amplificationMultiplierLabel">倍数喵~</string>
     <string name="androidAudioProcessingDesc">使用硬件音频处理喵~可能会影响输出质量喵~</string>
     <string name="androidAudioProcessingLabel">内置音频处理喵~</string>
-    <string name="appName">MicYou 喵~</string>
+    <string name="appName">MicYou Legacy 喵~</string>
     <string name="appearanceSection">外观设置喵~ ✨</string>
     <string name="audioConfigAppliedLabel">已应用喵~ ✓</string>
     <string name="audioFormatLabel">音频格式喵~</string>

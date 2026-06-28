@@ -6,7 +6,7 @@
     <string name="amplificationMultiplierLabel">Multiplier</string>
     <string name="androidAudioProcessingDesc">Use hardware audio processing. May affect output quality.</string>
     <string name="androidAudioProcessingLabel">Built-in Audio Processing</string>
-    <string name="appName">MicYou</string>
+    <string name="appName">MicYou Legacy</string>
     <string name="appearanceSection">Appearance</string>
     <string name="audioConfigAppliedLabel">Applied</string>
     <string name="audioFormatLabel">Audio Format</string>

@@ -60,7 +60,7 @@ To add a new language manually:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/LanRhyme/MicYou.git
+git clone https://github.com/Quan-Chan/Micyou-legacy.git
 cd MicYou
 ```
 

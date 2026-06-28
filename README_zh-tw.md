@@ -29,6 +29,8 @@
 
 </div>
 
+> **Fork 聲明**：本倉庫是 [LanRhyme/MicYou](https://github.com/LanRhyme/MicYou) 的一個 fork，獨立維護舊版 Kotlin Multiplatform (Compose) 版本。上游專案已遷移至 Tauri 重寫。本 fork 中的 bug 修復列表請見 [PR #260](https://github.com/LanRhyme/MicYou/pull/260)。
+
 ## 主要功能
 
 - **多種連線模式**：透過 Wi-Fi 或 USB (ADB/AOA) 連線
@@ -51,7 +53,7 @@
 
 ## 使用說明
 
-從 [GitHub Releases](https://github.com/LanRhyme/MicYou/releases) 下載最新版本，然後參閱常見問題文件了解各平台安裝說明：
+從 [GitHub Releases](https://github.com/Quan-Chan/Micyou-legacy/releases) 下載最新版本，然後參閱常見問題文件了解各平台安裝說明：
 
 - [快速開始](./docs/FAQ_TW.md#快速開始)
 - [常見問題 (FAQ)](./docs/FAQ_TW.md#常見問題)

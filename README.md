@@ -31,6 +31,8 @@
 
 </div>
 
+> **Fork notice**: This repository is a fork of [LanRhyme/MicYou](https://github.com/LanRhyme/MicYou), maintained independently for the legacy Kotlin Multiplatform (Compose) version. The upstream project has moved to a Tauri-based rewrite. See [PR #260](https://github.com/LanRhyme/MicYou/pull/260) for the list of bug fixes applied in this fork.
+
 ## Features
 
 - **Multiple Connection Modes**: Connect via Wi-Fi or USB (ADB/AOA).
@@ -53,7 +55,7 @@
 
 ## Getting Started
 
-Download the latest release from [GitHub Releases](https://github.com/LanRhyme/MicYou/releases), then see the FAQ for platform-specific setup:
+Download the latest release from [GitHub Releases](https://github.com/Quan-Chan/Micyou-legacy/releases), then see the FAQ for platform-specific setup:
 
 - [Quick Start](./docs/FAQ.md#quick-start)
 - [Common Issues](./docs/FAQ.md#faq)

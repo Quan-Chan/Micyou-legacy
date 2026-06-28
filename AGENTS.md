@@ -5,6 +5,10 @@
 MicYou is a Kotlin Multiplatform app (Android + Desktop) that turns Android devices into PC microphones.
 Built with Compose Multiplatform, Material 3, Ktor, and kotlinx-serialization.
 
+This is a fork of [LanRhyme/MicYou](https://github.com/LanRhyme/MicYou), independently maintained as `Micyou-legacy`.
+- Upstream: `upstream` → `https://github.com/LanRhyme/MicYou.git`
+- Origin: `origin` → `https://github.com/Quan-Chan/Micyou-legacy.git`
+
 ## Module structure
 
 - `:composeApp` - Main application (Android + Desktop JVM). Entry points:

@@ -463,6 +463,8 @@ class AudioStreamViewModel : ViewModel() {
             Logger.d("AudioStreamViewModel", "Calling _audioEngine.start()")
             _audioEngine.start(ip, port, mode, isClient, sampleRate, channelCount, audioFormat, _uiState.value.transportProtocol)
             Logger.i("AudioStreamViewModel", "Stream started successfully")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Logger.e("AudioStreamViewModel", "Failed to start stream", e)
 

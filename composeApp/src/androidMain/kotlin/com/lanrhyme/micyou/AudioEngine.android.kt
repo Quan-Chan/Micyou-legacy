@@ -74,8 +74,9 @@ suspend fun OutputStream.toByteWriteChannelSuspend(): ByteWriteChannel {
                     break
                 }
             }
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    connectionComplete?.completeExceptionally(e)
+                    throw e
         } catch (e: Exception) {
             Logger.e("ByteWriteChannel", "Unexpected error in write channel: ${e.message}", e)
         }

@@ -1745,6 +1745,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
                     .pointerInput(Unit) {
+                        val coroutineScope = this
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent()
@@ -1756,7 +1757,9 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                             maxOf(0, currentIndex - 1)
                                         else
                                             minOf(presets.size - 1, currentIndex + 1)
-                                        presetRowState.scrollToItem(targetIndex)
+                                        coroutineScope.launch {
+                                            presetRowState.scrollToItem(targetIndex)
+                                        }
                                         event.changes.forEach { it.consume() }
                                     }
                                 }

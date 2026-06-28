@@ -61,16 +61,6 @@ This is a fork of [LanRhyme/MicYou](https://github.com/LanRhyme/MicYou), indepen
 - Optional: `local.properties` for `AIFADIAN_API_TOKEN` / `AIFADIAN_USER_ID` (sponsorship features)
 - Optional: `ANDROID_KEYSTORE_*` env vars for release signing
 
-## Local-only files (not tracked by git)
-
-These files exist locally but are gitignored and must NEVER be committed:
-
-- `其他/签名信息` — Android APK 签名信息的存档文件，包含 keystore 密码等敏感信息
-- `release.keystore` — APK 签名用的 keystore 文件
-- `release.keystore.base64` — keystore 的 base64 编码，用于填入 GitHub Secrets
-
-签名相关的 4 个 GitHub Secrets 配置在 `其他/签名信息` 中有完整记录。如果需要重新配，参考该文件。
-
 ## Pre-commit hook
 
 Runs `./gradlew -q checkLocalization` automatically. Install with `./gradlew installGitHooks`.

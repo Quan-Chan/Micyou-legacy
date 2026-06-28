@@ -1,5 +1,6 @@
 package com.lanrhyme.micyou
 
+import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -1745,7 +1746,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
                     .pointerInput(Unit) {
-                        val coroutineScope = this
+                        val pointerScope = this
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent()
@@ -1757,7 +1758,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                             maxOf(0, currentIndex - 1)
                                         else
                                             minOf(presets.size - 1, currentIndex + 1)
-                                        coroutineScope.launch {
+                                        pointerScope.launch {
                                             presetRowState.scrollToItem(targetIndex)
                                         }
                                         event.changes.forEach { it.consume() }

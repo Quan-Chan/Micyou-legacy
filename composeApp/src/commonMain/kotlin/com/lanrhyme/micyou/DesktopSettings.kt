@@ -1,6 +1,5 @@
 package com.lanrhyme.micyou
 
-import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -1719,6 +1718,14 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
     val state by viewModel.uiState.collectAsState()
     val eqConfig = state.equalizerConfig
     val presetRowState = rememberLazyListState()
+    var pendingPresetScrollTarget by remember { mutableStateOf<Int?>(null) }
+    
+    LaunchedEffect(pendingPresetScrollTarget) {
+        pendingPresetScrollTarget?.let { target ->
+            presetRowState.scrollToItem(target)
+            pendingPresetScrollTarget = null
+        }
+    }
     
     val presets = listOf(
         stringResource(Res.string.equalizerNormalPreset) to List(10) { 0f },
@@ -1746,7 +1753,6 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceBright.copy(alpha = cardOpacity * 0.5f))
                     .pointerInput(Unit) {
-                        val pointerScope = this
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent()
@@ -1758,9 +1764,7 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
                                             maxOf(0, currentIndex - 1)
                                         else
                                             minOf(presets.size - 1, currentIndex + 1)
-                                        pointerScope.launch {
-                                            presetRowState.scrollToItem(targetIndex)
-                                        }
+                                        pendingPresetScrollTarget = targetIndex
                                         event.changes.forEach { it.consume() }
                                     }
                                 }

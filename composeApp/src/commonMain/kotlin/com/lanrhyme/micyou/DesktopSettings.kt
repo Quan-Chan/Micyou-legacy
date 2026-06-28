@@ -817,7 +817,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                         ListItem(
                             headlineContent = { Text(stringResource(Res.string.autoCheckUpdateLabel)) },
                             supportingContent = { Text(stringResource(Res.string.autoCheckUpdateDesc)) },
-                            leadingContent = { Icon(Icons.Rounded.Update, null, modifier = Modifier.size(24.dp)) },
+                            leadingContent = { Icon(Icons.Rounded.Refresh, null, modifier = Modifier.size(24.dp)) },
                             modifier = Modifier.clickable { showForkFeatureUnavailableDialog = true },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
@@ -833,7 +833,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                         ListItem(
                             headlineContent = { Text(stringResource(Res.string.mirrorDownloadLabel)) },
                             supportingContent = { Text(stringResource(Res.string.mirrorDownloadDesc)) },
-                            leadingContent = { Icon(Icons.Filled.Download, null, modifier = Modifier.size(24.dp)) },
+                            leadingContent = { Icon(Icons.Rounded.Download, null, modifier = Modifier.size(24.dp)) },
                             modifier = Modifier.clickable { showForkFeatureUnavailableDialog = true },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
@@ -1616,7 +1616,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                                     modifier = Modifier.clickable { uriHandler.openUri("https://github.com/Quan-Chan/Micyou-legacy") }
                                 ) 
                             },
-                            leadingContent = { Icon(Icons.Rounded.Code, null, modifier = Modifier.size(24.dp)) },
+                            leadingContent = { Icon(Icons.Rounded.Share, null, modifier = Modifier.size(24.dp)) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }
@@ -1731,13 +1731,6 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
             }
         }
     }
-
-    // Unavailable feature dialog (replaces Mirror CDK)
-    if (showMirrorCdkUnavailableDialog) {
-        UnavailableFeatureDialog(
-            onDismiss = { showMirrorCdkUnavailableDialog = false }
-        )
-    }
 }
 
 @Composable
@@ -1760,6 +1753,12 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
     val presetRowState = rememberLazyListState()
     var pendingPresetScrollTarget by remember { mutableStateOf<Int?>(null) }
     var showMirrorCdkUnavailableDialog by remember { mutableStateOf(false) }
+    
+    if (showMirrorCdkUnavailableDialog) {
+        UnavailableFeatureDialog(
+            onDismiss = { showMirrorCdkUnavailableDialog = false }
+        )
+    }
     
     LaunchedEffect(pendingPresetScrollTarget) {
         pendingPresetScrollTarget?.let { target ->
@@ -1973,7 +1972,6 @@ fun EqualizerContent(viewModel: MainViewModel, cardOpacity: Float) {
     }
 }
 
-@Composable
 @Composable
 private fun UnavailableFeatureDialog(onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current

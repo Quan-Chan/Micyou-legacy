@@ -817,7 +817,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                         ListItem(
                             headlineContent = { Text(stringResource(Res.string.autoCheckUpdateLabel)) },
                             supportingContent = { Text(stringResource(Res.string.autoCheckUpdateDesc)) },
-                            leadingContent = { Icon(Icons.Rounded.Refresh, null, modifier = Modifier.size(24.dp)) },
+                            leadingContent = { Icon(Icons.Rounded.Info, null, modifier = Modifier.size(24.dp)) },
                             modifier = Modifier.clickable { showForkFeatureUnavailableDialog = true },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
@@ -833,7 +833,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                         ListItem(
                             headlineContent = { Text(stringResource(Res.string.mirrorDownloadLabel)) },
                             supportingContent = { Text(stringResource(Res.string.mirrorDownloadDesc)) },
-                            leadingContent = { Icon(Icons.Rounded.Download, null, modifier = Modifier.size(24.dp)) },
+                            leadingContent = { Icon(Icons.Rounded.Info, null, modifier = Modifier.size(24.dp)) },
                             modifier = Modifier.clickable { showForkFeatureUnavailableDialog = true },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
@@ -1616,7 +1616,7 @@ fun SettingsContent(section: SettingsSection, viewModel: MainViewModel) {
                                     modifier = Modifier.clickable { uriHandler.openUri("https://github.com/Quan-Chan/Micyou-legacy") }
                                 ) 
                             },
-                            leadingContent = { Icon(Icons.Rounded.Share, null, modifier = Modifier.size(24.dp)) },
+                            leadingContent = { Icon(Icons.Rounded.Language, null, modifier = Modifier.size(24.dp)) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }

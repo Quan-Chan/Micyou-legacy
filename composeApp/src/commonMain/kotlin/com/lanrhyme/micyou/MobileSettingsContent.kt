@@ -1032,7 +1032,7 @@ private fun LazyListScope.aboutSettingsItems(
                         .padding(horizontal = 20.dp, vertical = 18.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Rounded.Share, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Rounded.Language, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("本分支维护", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)

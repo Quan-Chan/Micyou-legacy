@@ -395,7 +395,7 @@ actual class AudioEngine actual constructor() {
         val bindAddress = ip.takeIf { it.isNotBlank() } ?: getPreferredLocalIpAddress()
         currentBindAddress = bindAddress
         networkServer.start(port, bindAddress, transportProtocol, mode)
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             runCatching { mdnsAdvertiser.reAdvertise(port, bindAddress) }
                 .onFailure { Logger.w("AudioEngine", "mDNS advertise failed: ${it.message}") }
         }

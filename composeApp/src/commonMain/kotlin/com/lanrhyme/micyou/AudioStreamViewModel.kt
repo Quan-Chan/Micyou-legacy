@@ -464,6 +464,7 @@ class AudioStreamViewModel : ViewModel() {
             _audioEngine.start(ip, port, mode, isClient, sampleRate, channelCount, audioFormat, _uiState.value.transportProtocol)
             Logger.i("AudioStreamViewModel", "Stream started successfully")
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Logger.e("AudioStreamViewModel", "Failed to start stream", e)
 
             val errorType = ConnectionErrorHelper.analyzeError(e, mode)

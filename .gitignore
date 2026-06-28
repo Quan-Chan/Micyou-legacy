@@ -32,3 +32,8 @@ MicYou-*.zip
 org/
 build-output/
 
+
+# Keystore
+release.keystore
+release.keystore.base64
+其他/

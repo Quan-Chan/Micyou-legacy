@@ -37,13 +37,13 @@ jobs:
           echo "AIFADIAN_USER_ID=$AIFADIAN_USER_ID" >> local.properties
         fi
 
-    - name: Build Android Debug
-      run: ./gradlew :composeApp:assembleDebug
+    - name: Build Android Release
+      run: ./gradlew :composeApp:assembleRelease
 
     - name: Prepare Android Artifact
       run: |
         mkdir -p ci-artifacts
-        APK=$(ls composeApp/build/outputs/apk/debug/*.apk | head -n 1)
+        APK=$(ls composeApp/build/outputs/apk/release/*.apk | head -n 1)
         cp "$APK" "ci-artifacts/MicYou-Android-${{ steps.version.outputs.version }}.apk"
 
     - name: Upload Android Artifacts

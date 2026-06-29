@@ -136,7 +136,6 @@ actual class AudioEngine actual constructor() {
     private val startStopMutex = Mutex()
     private val proto = ProtoBuf { }
     
-    private var connectionComplete: CompletableDeferred<Unit>? = null
     private var sendChannel: Channel<MessageWrapper>? = null
     
     private var udpSocket: DatagramSocket? = null
@@ -196,16 +195,21 @@ actual class AudioEngine actual constructor() {
         savedTransportProtocol = transportProtocol
         isRunning = true
 
-        connectionComplete = CompletableDeferred()
-    val jobToJoin = startStopMutex.withLock {
+        val connectionComplete = CompletableDeferred<Unit>()
+        startStopMutex.withLock {
             val currentJob = job
             if (currentJob != null && !currentJob.isCompleted) {
-                Logger.w("AudioEngine", "AudioEngine already running, ignoring start request")
-                connectionComplete?.complete(Unit)
-                null
-            } else {
-                _state.value = StreamState.Connecting
-                CoroutineScope(Dispatchers.IO).launch {
+                if (currentJob.isCancelled) {
+                    currentJob.join()
+                    job = null
+                } else {
+                    Logger.w("AudioEngine", "AudioEngine already running, ignoring start request")
+                    connectionComplete.complete(Unit)
+                    return@withLock
+                }
+            }
+            _state.value = StreamState.Connecting
+            CoroutineScope(Dispatchers.IO).launch {
                     var socket: Socket? = null
                     var recorder: AudioRecord? = null
                     val channel = Channel<MessageWrapper>(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -360,7 +364,7 @@ actual class AudioEngine actual constructor() {
                         recorder.startRecording()
                         _state.value = StreamState.Streaming
                         _lastError.value = null
-                        connectionComplete?.complete(Unit)
+                        connectionComplete.complete(Unit)
 
                         if (enableStreamingNotification) {
                             val context = ContextHelper.getContext()
@@ -575,7 +579,7 @@ actual class AudioEngine actual constructor() {
                                 else -> getString(Res.string.connectionDisconnected)
                             }
                             _lastError.value = errorMsg
-                            connectionComplete?.completeExceptionally(Exception(errorMsg, e))
+                            connectionComplete.completeExceptionally(Exception(errorMsg, e))
                         }
                     } finally {
                         Logger.d("AudioEngine", "Cleaning up resources")
@@ -601,12 +605,11 @@ actual class AudioEngine actual constructor() {
                         _state.value = StreamState.Idle
                         Logger.i("AudioEngine", "AudioEngine stopped")
                     }
-                }.also { job = it }
-            }
+            }.also { job = it }
         }
         
         try {
-            connectionComplete?.await()
+            connectionComplete.await()
         } catch (e: Exception) {
             job?.cancel()
             throw e
@@ -658,7 +661,6 @@ actual class AudioEngine actual constructor() {
     
     actual fun stop() {
         job?.cancel()
-        job = null
         _state.value = StreamState.Idle
         isRunning = false
 

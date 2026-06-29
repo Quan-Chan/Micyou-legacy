@@ -599,9 +599,7 @@ actual class AudioEngine actual constructor() {
                         } catch (e: Exception) {
                             Logger.w("AudioEngine", "Error during cleanup: ${e.message}")
                         }
-                        if (job === coroutineContext[Job]) {
-                            _state.value = StreamState.Idle
-                        }
+                        _state.value = StreamState.Idle
                         Logger.i("AudioEngine", "AudioEngine stopped")
                     }
                 }.also { job = it }

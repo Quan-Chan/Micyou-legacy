@@ -554,7 +554,6 @@ actual class AudioEngine actual constructor() {
                             }
                         }
 } catch (e: kotlinx.coroutines.CancellationException) {
-                        connectionComplete?.completeExceptionally(e)
                         throw e
                     } catch (e: Exception) {
                         if (isActive && !isNormalDisconnect(e)) {

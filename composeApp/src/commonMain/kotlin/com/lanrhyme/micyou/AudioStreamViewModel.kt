@@ -510,7 +510,9 @@ class AudioStreamViewModel : ViewModel() {
         Logger.i("AudioStreamViewModel", "Stopping stream")
         streamJob?.cancel()
         _uiState.update { it.copy(streamState = StreamState.Idle) }
-        _audioEngine.stop()
+        viewModelScope.launch {
+            _audioEngine.stop()
+        }
     }
 
     fun setMode(mode: ConnectionMode) {
@@ -853,7 +855,9 @@ class AudioStreamViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         discoveryManager.stopDiscovery()
-        _audioEngine.stop()
+        kotlinx.coroutines.runBlocking {
+            _audioEngine.stop()
+        }
     }
 
     fun startDiscovery() {

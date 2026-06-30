@@ -477,21 +477,15 @@ actual class AudioEngine actual constructor() {
         }
     }
 
-    actual fun stop() {
+    actual suspend fun stop() {
         stopAudioProcessing()
-        scope.launch(Dispatchers.IO) {
-            stopAndWait()
-        }
-    }
-
-    /**
-     * 挂起函数版本的 stop，确保停止操作完全完成后再返回。
-     * 用于 IP 切换等需要严格顺序的场景。
-     */
-    actual suspend fun stopAndWait() {
         startStopMutex.withLock {
             stopLocked()
         }
+    }
+
+    actual suspend fun stopAndWait() {
+        stop()
     }
 
     private suspend fun stopLocked() {

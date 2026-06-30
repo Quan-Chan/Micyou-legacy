@@ -36,6 +36,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.protobuf.ProtoBuf
 import java.io.EOFException
+import java.util.concurrent.atomic.AtomicInteger
 import java.io.OutputStream
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -133,6 +134,7 @@ actual class AudioEngine actual constructor() {
     actual val isMuted: Flow<Boolean> = _isMuted
 
     private var job: Job? = null
+    private val startGeneration = AtomicInteger(0)
     private val startStopMutex = Mutex()
     private val proto = ProtoBuf { }
     
@@ -185,6 +187,7 @@ actual class AudioEngine actual constructor() {
         if (!isClient) return
         Logger.i("AudioEngine", "Starting Android AudioEngine: mode=$mode, protocol=$transportProtocol, ip=$ip, port=$port, sampleRate=${sampleRate.value}, channels=${channelCount.label}, format=${audioFormat.label}")
         _lastError.value = null
+        val myGen = startGeneration.incrementAndGet()
 
         savedIp = ip
         savedPort = port
@@ -611,7 +614,9 @@ actual class AudioEngine actual constructor() {
         try {
             connectionComplete.await()
         } catch (e: Exception) {
-            job?.cancel()
+            if (startGeneration.get() == myGen) {
+                job?.cancel()
+            }
             throw e
         }
     }
